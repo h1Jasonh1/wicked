@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Icon } from "@/app/components/Icons";
-import styles from "@/app/components/Store.module.css";
+import { Icon } from "@/components/ui/Icons";
+import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | WICKED",
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
       <section className={styles.policyGrid}>
         {[
           ["Information collected", "Contact details, delivery information, payment status, support messages, and shopping preferences needed to complete the skincare customer experience."],
-          ["How it is used", "To process orders, provide support, improve product availability, prevent fraud, and send Skin Notes only where requested."],
+          ["How it is used", "To process orders, provide support, improve product availability, prevent fraud, and send account or order communications where requested."],
           ["Customer control", "Customers may request access, correction, or deletion of eligible information through support."],
         ].map(([title, text]) => (
           <article className={styles.policyCard} key={title}>

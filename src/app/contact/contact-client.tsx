@@ -3,8 +3,10 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { Icon } from "@/app/components/Icons";
-import styles from "@/app/components/Store.module.css";
+import { socialLinks } from "@/data/navigation";
+import { Icon } from "@/components/ui/Icons";
+import { TextField } from "@/components/ui/FormField";
+import styles from "@/styles/store.module.css";
 
 type Errors = Partial<Record<"name" | "email" | "subject" | "message", string>>;
 
@@ -79,27 +81,27 @@ export default function ContactClient() {
             </div>
           ) : null}
           <div className={styles.formGrid}>
-            <Field
+            <TextField
               error={errors.name}
               label="Name"
               value={values.name}
               onChange={(value) => update("name", value)}
             />
-            <Field
+            <TextField
               error={errors.email}
               label="Email"
               type="email"
               value={values.email}
               onChange={(value) => update("email", value)}
             />
-            <Field
+            <TextField
               error={errors.subject}
               label="Subject"
               value={values.subject}
               placeholder="Delivery, returns, routine guidance..."
               onChange={(value) => update("subject", value)}
             />
-            <Field
+            <TextField
               label="Order number optional"
               value={values.order}
               placeholder="WCK-1048"
@@ -133,15 +135,24 @@ export default function ContactClient() {
         <aside className={styles.summaryPanel}>
           <span className={styles.eyebrow}>Support details</span>
           <Info icon="mail" title="Email" text="support@wicked.example" />
-          <Info icon="phone" title="Phone" text="+27 82 555 0140" />
           <Info icon="map" title="Hours" text="Monday to Friday, 9:00 to 17:00 SAST" />
           <div className={styles.socials}>
-            <Link href="/contact" aria-label="Instagram">
+            <a
+              href={socialLinks.instagram.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={socialLinks.instagram.ariaLabel}
+            >
               <Icon name="instagram" />
-            </Link>
-            <Link href="/contact" aria-label="TikTok">
+            </a>
+            <a
+              href={socialLinks.tiktok.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={socialLinks.tiktok.ariaLabel}
+            >
               <Icon name="tiktok" />
-            </Link>
+            </a>
             <Link href="/contact" aria-label="Facebook">
               <Icon name="facebook" />
             </Link>
@@ -155,43 +166,12 @@ export default function ContactClient() {
   );
 }
 
-function Field({
-  error,
-  label,
-  onChange,
-  placeholder,
-  type = "text",
-  value,
-}: {
-  error?: string;
-  label: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  type?: string;
-  value: string;
-}) {
-  return (
-    <label className={styles.field}>
-      <span>{label}</span>
-      <input
-        className={styles.input}
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        aria-invalid={Boolean(error)}
-        onChange={(event) => onChange(event.target.value)}
-      />
-      {error ? <span className={styles.fieldError}>{error}</span> : null}
-    </label>
-  );
-}
-
 function Info({
   icon,
   text,
   title,
 }: {
-  icon: "mail" | "phone" | "map";
+  icon: "mail" | "map";
   text: string;
   title: string;
 }) {

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Icon } from "@/app/components/Icons";
-import { brand, collections } from "@/app/data/store";
-import styles from "@/app/components/Store.module.css";
+import { Icon } from "@/components/ui/Icons";
+import { brand, collections } from "@/data/store";
+import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
   title: "About WICKED | Premium Skincare With an Edge",

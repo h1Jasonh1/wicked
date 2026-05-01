@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { Product } from "@/app/data/store";
-import { formatPrice, products } from "@/app/data/store";
+import { getProductsByIds } from "@/data/categories";
+import { formatPrice } from "@/lib/formatters";
+import type { Product } from "@/types/product";
+import { ProductGallery } from "@/components/product/ProductGallery";
 import {
-  ProductRail,
   QuantitySelector,
   VariantSelectors,
-} from "@/app/components/AppShell";
-import { Icon } from "@/app/components/Icons";
-import { ProductVisual, Stars } from "@/app/components/ProductCard";
-import { useStore } from "@/app/components/StoreProvider";
-import styles from "@/app/components/Store.module.css";
+} from "@/components/product/ProductControls";
+import { ProductRail } from "@/components/sections/ProductRail";
+import { Icon } from "@/components/ui/Icons";
+import { Stars } from "@/components/product/ProductCard";
+import { useStore } from "@/store/StoreProvider";
+import styles from "@/styles/store.module.css";
 
 export default function ProductPageClient({
   product,
@@ -41,11 +43,10 @@ export default function ProductPageClient({
 
   const recentlyViewedProducts = useMemo(
     () =>
-      recentlyViewed
-        .filter((id) => id !== product.id)
-        .map((id) => products.find((item) => item.id === id))
-        .filter((item): item is Product => Boolean(item))
-        .slice(0, 4),
+      getProductsByIds(recentlyViewed.filter((id) => id !== product.id)).slice(
+        0,
+        4,
+      ),
     [product.id, recentlyViewed],
   );
 
@@ -59,27 +60,11 @@ export default function ProductPageClient({
     <main>
       <section className={styles.productPage}>
         <div className={styles.productLayout}>
-          <div className={styles.gallery}>
-            <div className={styles.galleryMain}>
-              <ProductVisual product={product} scene={activeImage} />
-            </div>
-            <div className={styles.thumbGrid} aria-label="Product gallery">
-              {product.gallery.map((image, index) => (
-                <button
-                  className={`${styles.thumbButton} ${
-                    activeImage === index ? styles.activeThumb : ""
-                  }`}
-                  key={image}
-                  type="button"
-                  aria-label={`Show ${product.name} view ${index + 1}`}
-                  aria-pressed={activeImage === index}
-                  onClick={() => setActiveImage(index)}
-                >
-                  <ProductVisual product={product} compact scene={index} />
-                </button>
-              ))}
-            </div>
-          </div>
+          <ProductGallery
+            activeImage={activeImage}
+            onImageChange={setActiveImage}
+            product={product}
+          />
 
           <div className={styles.productCopy}>
             <span className={styles.eyebrow}>{product.collection}</span>

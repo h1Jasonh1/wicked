@@ -5,7 +5,7 @@ import {
   getProductBySlug,
   getRelatedProducts,
   products,
-} from "@/app/data/store";
+} from "@/data/store";
 import ProductPageClient from "./product-page-client";
 
 type ProductPageProps = {

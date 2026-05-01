@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import type { Product } from "@/app/data/store";
-import { formatPrice } from "@/app/data/store";
-import { Icon } from "./Icons";
-import styles from "./Store.module.css";
-import { useStore } from "./StoreProvider";
+import type { Product } from "@/types/product";
+import { formatPrice } from "@/lib/formatters";
+import { Icon } from "@/components/ui/Icons";
+import styles from "@/styles/store.module.css";
+import { useStore } from "@/store/StoreProvider";
 
 export function Stars({
   rating,

@@ -22,7 +22,6 @@ export type IconName =
   | "card"
   | "filter"
   | "mail"
-  | "phone"
   | "map";
 
 export function Icon({ name }: { name: IconName }) {
@@ -202,12 +201,6 @@ export function Icon({ name }: { name: IconName }) {
         <svg {...common}>
           <rect x="3.8" y="5.6" width="16.4" height="12.8" rx="2" />
           <path d="m4.5 7 7.5 6 7.5-6" />
-        </svg>
-      );
-    case "phone":
-      return (
-        <svg {...common}>
-          <path d="M7.2 4.3 9.7 4l1.4 4-1.6 1.2c.9 1.9 2.4 3.4 4.3 4.3l1.2-1.6 4 1.4-.3 2.5c-.1 1.1-1 1.9-2.1 1.9A12.3 12.3 0 0 1 4.1 6.4c0-1.1.8-2 1.9-2.1Z" />
         </svg>
       );
     case "map":

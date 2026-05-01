@@ -17,7 +17,7 @@ export default function Home() {
           src={heroImage}
           alt="Premium skincare bottle on a deep black studio background"
           fill
-          loading="eager"
+          preload={true}
           sizes="100vw"
         />
         <div className={styles.heroContent}>
@@ -36,6 +36,20 @@ export default function Home() {
               Build a routine
             </Link>
           </div>
+          <dl className={styles.heroMetrics} aria-label="Store highlights">
+            <div>
+              <dt>24h</dt>
+              <dd>fast dispatch</dd>
+            </div>
+            <div>
+              <dt>4.9</dt>
+              <dd>routine rating</dd>
+            </div>
+            <div>
+              <dt>12</dt>
+              <dd>focused formulas</dd>
+            </div>
+          </dl>
         </div>
       </section>
 
@@ -162,7 +176,7 @@ export default function Home() {
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <span className={styles.eyebrow}>Customer reviews</span>
+          <span className={styles.eyebrow}>Customer notes</span>
           <h2>Skincare people actually want to keep using.</h2>
         </div>
         <div className={styles.policyGrid}>
@@ -170,6 +184,7 @@ export default function Home() {
             <article className={styles.reviewCard} key={review.name}>
               <p>{review.quote}</p>
               <h3>{review.name}</h3>
+              <span className={styles.stockNote}>{review.initials}</span>
             </article>
           ))}
         </div>

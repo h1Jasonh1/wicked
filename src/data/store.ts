@@ -1,50 +1,18 @@
-export type ProductBadge = "New" | "Best Seller" | "Limited" | "Signature" | "Sale";
+import type {
+  Collection,
+  Product,
+  ProductConcern,
+  ProductSkinType,
+  StockStatus,
+} from "@/types/product";
 
-export type ProductForm = "pump" | "dropper" | "jar" | "tube" | "set";
-
-export type Product = {
-  id: string;
-  slug: string;
-  name: string;
-  category: string;
-  collection: string;
-  tag: string;
-  badge: ProductBadge;
-  price: number;
-  compareAt?: number;
-  rating: number;
-  reviews: number;
-  stock: number;
-  stockNote: string;
-  image: string;
-  imageAlt: string;
-  gallery: string[];
-  variants?: string[];
-  sizes?: string[];
-  visual: {
-    form: ProductForm;
-    accent: string;
-    texture: string;
-  };
-  description: string;
-  longDescription: string;
-  benefits: string[];
-  details: string[];
-  specs: string[];
-  care: string;
-  delivery: string;
-  returns: string;
-  filters: Array<"New" | "Popular" | "Premium" | "Sale">;
-  releaseRank: number;
-};
-
-export type Collection = {
-  name: string;
-  slug: string;
-  description: string;
-  image: string;
-  visualDirection: string;
-};
+export type {
+  Collection,
+  Product,
+  ProductBadge,
+  ProductFilter,
+  ProductForm,
+} from "@/types/product";
 
 export const brand = {
   name: "WICKED",
@@ -98,7 +66,88 @@ export const collections: Collection[] = [
 
 const galleryScenes = ["studio", "texture", "routine"];
 
-export const products: Product[] = [
+type HydratedProductField =
+  | "skinTypes"
+  | "concerns"
+  | "salePrice"
+  | "reviewCount"
+  | "stockStatus"
+  | "inventory"
+  | "images"
+  | "ingredients"
+  | "usage"
+  | "isFeatured"
+  | "isActive";
+
+type ProductSeed = Omit<Product, HydratedProductField>;
+
+const productTargeting: Record<
+  string,
+  { skinTypes: ProductSkinType[]; concerns: ProductConcern[] }
+> = {
+  "hydrating-gel-cleanser": {
+    skinTypes: ["All skin types", "Normal", "Dry", "Combination", "Sensitive"],
+    concerns: ["Dryness", "Barrier Support"],
+  },
+  "vitamin-c-brightening-serum": {
+    skinTypes: ["Normal", "Dry", "Combination"],
+    concerns: ["Dullness", "Dark Spots"],
+  },
+  "barrier-repair-moisturiser": {
+    skinTypes: ["Normal", "Dry", "Combination", "Sensitive"],
+    concerns: ["Barrier Support", "Dryness", "Redness"],
+  },
+  "niacinamide-refining-serum": {
+    skinTypes: ["Normal", "Oily", "Combination"],
+    concerns: ["Pores & Texture", "Oil Control", "Acne & Breakouts"],
+  },
+  "mineral-daily-spf": {
+    skinTypes: ["All skin types", "Sensitive"],
+    concerns: ["Sun Protection", "Dark Spots"],
+  },
+  "overnight-recovery-mask": {
+    skinTypes: ["Normal", "Dry", "Sensitive"],
+    concerns: ["Barrier Support", "Dryness", "Dullness"],
+  },
+  "peptide-eye-cream": {
+    skinTypes: ["All skin types"],
+    concerns: ["Fine Lines", "Dryness", "Dullness"],
+  },
+  "gentle-exfoliating-toner": {
+    skinTypes: ["Normal", "Oily", "Combination"],
+    concerns: ["Pores & Texture", "Dullness", "Dark Spots"],
+  },
+  "clarifying-clay-mask": {
+    skinTypes: ["Oily", "Combination"],
+    concerns: ["Oil Control", "Acne & Breakouts", "Pores & Texture"],
+  },
+  "glow-renewal-skincare-set": {
+    skinTypes: ["All skin types", "Normal", "Dry", "Combination"],
+    concerns: ["Dullness", "Dryness", "Barrier Support"],
+  },
+  "hyaluronic-acid-serum": {
+    skinTypes: ["All skin types", "Dry", "Sensitive"],
+    concerns: ["Dryness", "Fine Lines", "Barrier Support"],
+  },
+  "daily-reset-toner": {
+    skinTypes: ["All skin types", "Sensitive"],
+    concerns: ["Redness", "Barrier Support", "Dryness"],
+  },
+};
+
+function getStockStatus(stock: number): StockStatus {
+  if (stock <= 0) {
+    return "Out of stock";
+  }
+
+  if (stock <= 12) {
+    return "Low stock";
+  }
+
+  return "In stock";
+}
+
+const productSeeds: ProductSeed[] = [
   {
     id: "hydrating-gel-cleanser",
     slug: "hydrating-gel-cleanser",
@@ -534,9 +583,41 @@ export const products: Product[] = [
   },
 ];
 
+export const products: Product[] = productSeeds.map((product) => {
+  const targeting = productTargeting[product.id] ?? {
+    skinTypes: ["All skin types"],
+    concerns: ["Barrier Support"],
+  };
+
+  return {
+    ...product,
+    ...targeting,
+    salePrice: product.compareAt ? product.price : undefined,
+    reviewCount: product.reviews,
+    stockStatus: getStockStatus(product.stock),
+    inventory: product.stock,
+    images: [product.image, ...product.gallery],
+    ingredients: product.details,
+    usage: product.care,
+    isFeatured:
+      product.badge === "Best Seller" || product.filters.includes("Popular"),
+    isActive: true,
+  };
+});
+
 export const categories = [
   "All",
   ...Array.from(new Set(products.map((product) => product.category))),
+];
+
+export const skinTypeFilters = [
+  "All",
+  ...Array.from(new Set(products.flatMap((product) => product.skinTypes))),
+];
+
+export const concernFilters = [
+  "All",
+  ...Array.from(new Set(products.flatMap((product) => product.concerns))),
 ];
 
 export const shopFilters = ["All", "New", "Popular", "Premium", "Sale"] as const;
@@ -544,40 +625,31 @@ export const shopFilters = ["All", "New", "Popular", "Premium", "Sale"] as const
 export const reviews = [
   {
     name: "Mila Jacobs",
-    role: "Sensitive-skin customer",
     quote:
       "WICKED feels elevated but practical. The cleanser and moisturiser made my routine simpler within a week.",
     initials: "MJ",
   },
   {
     name: "Thando Meyer",
-    role: "Beauty editor",
     quote:
       "The brand knows exactly what it is: sharp black packaging, clear formulas, and product copy that does not overpromise.",
     initials: "TM",
   },
   {
     name: "Nadia Petersen",
-    role: "Makeup artist",
     quote:
       "The SPF and serums sit beautifully under makeup. Everything feels considered without being precious.",
     initials: "NP",
   },
   {
     name: "Lara Singh",
-    role: "Repeat customer",
     quote:
       "Fast delivery, secure packaging, and the checkout totals were easy to trust. The bundle was gift-ready.",
     initials: "LS",
   },
 ];
 
-export const formatPrice = (value: number) =>
-  new Intl.NumberFormat("en-ZA", {
-    style: "currency",
-    currency: "ZAR",
-    maximumFractionDigits: 0,
-  }).format(value);
+export { formatPrice } from "@/lib/formatters";
 
 export function getProductBySlug(slug: string) {
   return products.find((product) => product.slug === slug);

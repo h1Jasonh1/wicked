@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Icon } from "@/app/components/Icons";
-import styles from "@/app/components/Store.module.css";
+import { Icon } from "@/components/ui/Icons";
+import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
   title: "Delivery Information | WICKED",
@@ -101,7 +101,7 @@ export default function DeliveryPage() {
             <div className={styles.accordionContent}>
               <p>
                 WICKED currently focuses on South Africa delivery. International
-                availability would be announced through Skin Notes.
+                availability will be announced on the website when it is ready.
               </p>
             </div>
           </details>

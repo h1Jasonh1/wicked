@@ -7,79 +7,45 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Product } from "@/app/data/store";
-import { categories, collections, formatPrice, shopFilters } from "@/app/data/store";
-import { Icon } from "@/app/components/Icons";
-import { ProductCard } from "@/app/components/ProductCard";
-import styles from "@/app/components/Store.module.css";
-
-type SortOption =
-  | "Featured"
-  | "Newest"
-  | "Price Low to High"
-  | "Price High to Low"
-  | "Best Rated";
-
-const sortOptions: SortOption[] = [
-  "Featured",
-  "Newest",
-  "Price Low to High",
-  "Price High to Low",
-  "Best Rated",
-];
-
-const categoryCards = [
-  {
-    category: "Cleansers",
-    label: "Cleansers",
-  },
-  {
-    category: "Serums",
-    label: "Serums",
-  },
-  {
-    category: "Moisturisers",
-    label: "Moisturisers",
-  },
-  {
-    category: "Toners",
-    label: "Toners",
-  },
-  {
-    category: "Sunscreen / SPF",
-    label: "SPF",
-  },
-  {
-    category: "Masks",
-    label: "Masks",
-  },
-  {
-    category: "Eye Care",
-    label: "Eye Care",
-  },
-  {
-    category: "Sets / Bundles",
-    label: "Bundles",
-  },
-];
+import { categoryCards } from "@/data/categories";
+import {
+  getMaxProductPrice,
+  getVisibleProducts,
+  hasActiveProductFilters,
+  sortOptions,
+  type SortOption,
+} from "@/lib/shop";
+import type { Product } from "@/types/product";
+import { useReducedMotionScroll } from "@/hooks/useOverlayControls";
+import { Icon } from "@/components/ui/Icons";
+import { ProductCard } from "@/components/product/ProductCard";
+import { FilterPanel } from "@/components/product/ProductFilters";
+import styles from "@/styles/store.module.css";
 
 export default function ShopClient({
   initialCategory,
   initialCollection,
+  initialConcern,
   initialFilter,
   initialQuery,
+  initialSkinType,
   products,
 }: {
   initialCategory: string;
   initialCollection: string;
+  initialConcern: string;
   initialFilter: string;
   initialQuery: string;
+  initialSkinType: string;
   products: Product[];
 }) {
-  const maxProductPrice = Math.max(...products.map((product) => product.price));
+  const maxProductPrice = getMaxProductPrice(products);
+  const scrollIntoView = useReducedMotionScroll();
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState(initialCategory);
   const [collection, setCollection] = useState(initialCollection);
+  const [skinType, setSkinType] = useState(initialSkinType);
+  const [concern, setConcern] = useState(initialConcern);
   const [filter, setFilter] = useState(initialFilter);
   const [sort, setSort] = useState<SortOption>("Featured");
   const [maxPrice, setMaxPrice] = useState(maxProductPrice);
@@ -143,71 +109,34 @@ export default function ShopClient({
     });
   }, [sort, sortOpen]);
 
-  const visibleProducts = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    const filtered = products.filter((product) => {
-      const matchesQuery = term
-        ? [
-            product.name,
-            product.category,
-            product.collection,
-            product.tag,
-            product.description,
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(term)
-        : true;
-      const matchesCategory =
-        category === "All" || product.category === category;
-      const matchesCollection =
-        collection === "All" || product.collection === collection;
-      const matchesFilter =
-        filter === "All" ||
-        product.filters.includes(filter as Product["filters"][number]);
-      const matchesPrice = product.price <= maxPrice;
-
-      return (
-        matchesQuery &&
-        matchesCategory &&
-        matchesCollection &&
-        matchesFilter &&
-        matchesPrice
-      );
-    });
-
-    return [...filtered].sort((a, b) => {
-      if (sort === "Newest") {
-        return b.releaseRank - a.releaseRank;
-      }
-
-      if (sort === "Price Low to High") {
-        return a.price - b.price;
-      }
-
-      if (sort === "Price High to Low") {
-        return b.price - a.price;
-      }
-
-      if (sort === "Best Rated") {
-        return b.rating - a.rating;
-      }
-
-      return b.reviews - a.reviews;
-    });
-  }, [category, collection, filter, maxPrice, products, query, sort]);
-
-  const hasActiveFilters =
-    query.trim() !== "" ||
-    category !== "All" ||
-    collection !== "All" ||
-    filter !== "All" ||
-    maxPrice < maxProductPrice;
+  const filterState = useMemo(
+    () => ({
+      category,
+      collection,
+      concern,
+      filter,
+      maxPrice,
+      query,
+      skinType,
+      sort,
+    }),
+    [category, collection, concern, filter, maxPrice, query, skinType, sort],
+  );
+  const visibleProducts = useMemo(
+    () => getVisibleProducts(products, filterState),
+    [filterState, products],
+  );
+  const hasActiveFilters = hasActiveProductFilters(
+    filterState,
+    maxProductPrice,
+  );
 
   const resetFilters = () => {
     setQuery("");
     setCategory("All");
     setCollection("All");
+    setSkinType("All");
+    setConcern("All");
     setFilter("All");
     setMaxPrice(maxProductPrice);
   };
@@ -219,20 +148,15 @@ export default function ShopClient({
       return;
     }
 
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    productSection.scrollIntoView({
-      behavior: prefersReducedMotion ? "auto" : "smooth",
-      block: "start",
-    });
+    scrollIntoView(productSection);
   };
 
   const handleCategorySelect = (nextCategory: string) => {
     setQuery("");
     setCategory(nextCategory);
     setCollection("All");
+    setSkinType("All");
+    setConcern("All");
     setFilter("All");
     setMaxPrice(maxProductPrice);
     window.requestAnimationFrame(scrollToProducts);
@@ -241,14 +165,18 @@ export default function ShopClient({
   const filterPanelProps = {
     category,
     collection,
+    concern,
     filter,
     maxPrice,
     maxProductPrice,
+    skinType,
     onReset: resetFilters,
     onCategoryChange: setCategory,
     onCollectionChange: setCollection,
+    onConcernChange: setConcern,
     onFilterChange: setFilter,
     onMaxPriceChange: setMaxPrice,
+    onSkinTypeChange: setSkinType,
   };
 
   const desktopFilterControls = (
@@ -355,6 +283,10 @@ export default function ShopClient({
             <span>
               {category === "All" ? "All categories" : category}
             </span>
+            <span>
+              {skinType === "All" ? "All skin types" : skinType}
+            </span>
+            {concern !== "All" ? <span>{concern}</span> : null}
             {hasActiveFilters ? (
               <button className={styles.textButton} type="button" onClick={resetFilters}>
                 Reset filters
@@ -534,105 +466,5 @@ export default function ShopClient({
         </div>
       </div>
     </main>
-  );
-}
-
-function FilterPanel({
-  category,
-  collection,
-  filter,
-  maxPrice,
-  maxProductPrice,
-  priceFilterId,
-  onReset,
-  onCategoryChange,
-  onCollectionChange,
-  onFilterChange,
-  onMaxPriceChange,
-}: {
-  category: string;
-  collection: string;
-  filter: string;
-  maxPrice: number;
-  maxProductPrice: number;
-  priceFilterId: string;
-  onReset: () => void;
-  onCategoryChange: (value: string) => void;
-  onCollectionChange: (value: string) => void;
-  onFilterChange: (value: string) => void;
-  onMaxPriceChange: (value: number) => void;
-}) {
-  return (
-    <aside className={styles.filterPanel} aria-label="Shop filters">
-      <div className={styles.drawerTop}>
-        <div>
-          <span className={styles.eyebrow}>Filters</span>
-          <h2>Refine products</h2>
-        </div>
-        <button className={styles.textButton} type="button" onClick={onReset}>
-          Reset
-        </button>
-      </div>
-      <div className={styles.filterGroup}>
-        <label>Category</label>
-        {categories.map((item) => (
-          <button
-            className={category === item ? styles.activeChip : ""}
-            key={item}
-            type="button"
-            onClick={() => onCategoryChange(item)}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-      <div className={styles.filterGroup}>
-        <label>Collection</label>
-        <button
-          className={collection === "All" ? styles.activeChip : ""}
-          type="button"
-          onClick={() => onCollectionChange("All")}
-        >
-          All
-        </button>
-        {collections.map((item) => (
-          <button
-            className={collection === item.name ? styles.activeChip : ""}
-            key={item.slug}
-            type="button"
-            onClick={() => onCollectionChange(item.name)}
-          >
-            {item.name}
-          </button>
-        ))}
-      </div>
-      <div className={styles.filterGroup}>
-        <label>Status</label>
-        {shopFilters.map((item) => (
-          <button
-            className={filter === item ? styles.activeChip : ""}
-            key={item}
-            type="button"
-            onClick={() => onFilterChange(item)}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
-      <div className={styles.filterGroup}>
-        <label htmlFor={priceFilterId}>Maximum price</label>
-        <input
-          className={styles.range}
-          id={priceFilterId}
-          max={maxProductPrice}
-          min={100}
-          step={20}
-          type="range"
-          value={maxPrice}
-          onChange={(event) => onMaxPriceChange(Number(event.target.value))}
-        />
-        <span className={styles.stockNote}>{formatPrice(maxPrice)}</span>
-      </div>
-    </aside>
   );
 }

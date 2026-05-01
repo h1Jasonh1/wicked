@@ -2,33 +2,21 @@
 
 import {
   createContext,
+  type Dispatch,
+  type SetStateAction,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from "react";
-import type { Product } from "@/app/data/store";
+import type { AddToCartOptions, CartItem, Toast } from "@/types/cart";
+import type { Product } from "@/types/product";
+import { useAuth } from "@/components/auth/AuthProvider";
 
-type CartItem = Product & {
-  cartKey: string;
-  quantity: number;
-  selectedVariant?: string;
-  selectedSize?: string;
-};
+const CART_ACCOUNT_PROMPT_KEY = "wicked.cartAccountPromptShown";
 
-type Toast = {
-  message: string;
-  type: "success" | "error";
-};
-
-type AddOptions = {
-  variant?: string;
-  size?: string;
-  openCart?: boolean;
-};
-
-type StoreContextValue = {
+export type StoreContextValue = {
   cartItems: CartItem[];
   cartCount: number;
   cartSubtotal: number;
@@ -44,22 +32,32 @@ type StoreContextValue = {
   searchOpen: boolean;
   wishlistOpen: boolean;
   checkoutOpen: boolean;
+  cartAccountPromptVisible: boolean;
   quickViewProduct: Product | null;
   discountCode: string;
-  addToCart: (product: Product, quantity?: number, options?: AddOptions) => void;
-  buyNow: (product: Product, quantity?: number, options?: AddOptions) => void;
+  addToCart: (
+    product: Product,
+    quantity?: number,
+    options?: AddToCartOptions,
+  ) => void;
+  buyNow: (
+    product: Product,
+    quantity?: number,
+    options?: AddToCartOptions,
+  ) => void;
   updateCartQuantity: (cartKey: string, amount: number) => void;
   removeCartItem: (cartKey: string) => void;
   isWishlisted: (productId: string) => boolean;
   toggleWishlist: (product: Product) => void;
   markViewed: (productId: string) => void;
   setCartOpen: (open: boolean) => void;
-  setSearchOpen: (open: boolean) => void;
+  setSearchOpen: Dispatch<SetStateAction<boolean>>;
   setWishlistOpen: (open: boolean) => void;
   setCheckoutOpen: (open: boolean) => void;
   setQuickViewProduct: (product: Product | null) => void;
   openCartDrawer: () => void;
   openWishlistDrawer: () => void;
+  dismissCartAccountPrompt: () => void;
   setDiscountCode: (code: string) => void;
   startCheckout: () => void;
   placeOrder: () => void;
@@ -69,6 +67,7 @@ type StoreContextValue = {
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
@@ -77,6 +76,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [cartAccountPromptVisible, setCartAccountPromptVisible] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [discountCode, setDiscountCode] = useState("");
 
@@ -94,14 +94,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       ),
     [cartItems],
   );
-  const discount =
-    discountCode.trim().toUpperCase() === "WICKED10"
-      ? Math.round(cartSubtotal * 0.1)
-      : 0;
-  const shipping = cartSubtotal === 0 || cartSubtotal - discount >= 750 ? 0 : 95;
-  const tax =
-    cartSubtotal === 0 ? 0 : Math.round(((cartSubtotal - discount) * 15) / 115);
-  const cartTotal = Math.max(0, cartSubtotal - discount + shipping);
+  const discount = useMemo(
+    () =>
+      discountCode.trim().toUpperCase() === "WICKED10"
+        ? Math.round(cartSubtotal * 0.1)
+        : 0,
+    [cartSubtotal, discountCode],
+  );
+  const shipping = useMemo(
+    () => (cartSubtotal === 0 || cartSubtotal - discount >= 750 ? 0 : 95),
+    [cartSubtotal, discount],
+  );
+  const tax = useMemo(
+    () =>
+      cartSubtotal === 0
+        ? 0
+        : Math.round(((cartSubtotal - discount) * 15) / 115),
+    [cartSubtotal, discount],
+  );
+  const cartTotal = useMemo(
+    () => Math.max(0, cartSubtotal - discount + shipping),
+    [cartSubtotal, discount, shipping],
+  );
 
   useEffect(() => {
     if (!toast) {
@@ -112,9 +126,30 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const showToast = (message: string, type: Toast["type"] = "success") => {
+  const showToast = useCallback((message: string, type: Toast["type"] = "success") => {
     setToast({ message, type });
-  };
+  }, []);
+
+  const promptForAccountAfterCartAdd = useCallback(() => {
+    if (isAuthenticated) {
+      return;
+    }
+
+    const hasSeenPrompt =
+      window.sessionStorage.getItem(CART_ACCOUNT_PROMPT_KEY) === "true";
+
+    if (hasSeenPrompt) {
+      return;
+    }
+
+    window.sessionStorage.setItem(CART_ACCOUNT_PROMPT_KEY, "true");
+    setCartAccountPromptVisible(true);
+    showToast("Create an account to secure your cart and complete checkout.");
+  }, [isAuthenticated, showToast]);
+
+  const dismissCartAccountPrompt = useCallback(() => {
+    setCartAccountPromptVisible(false);
+  }, []);
 
   const openCartDrawer = useCallback(() => {
     setSearchOpen(false);
@@ -132,10 +167,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setWishlistOpen(true);
   }, []);
 
-  const addToCart = (
+  const addToCart = useCallback((
     product: Product,
     quantity = 1,
-    options: AddOptions = {},
+    options: AddToCartOptions = {},
   ) => {
     const quantityToAdd = Number.isFinite(quantity)
       ? Math.max(1, Math.floor(quantity))
@@ -174,19 +209,28 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
 
     showToast(`${product.name} is now in your cart.`);
-  };
+    promptForAccountAfterCartAdd();
+  }, [openCartDrawer, promptForAccountAfterCartAdd, showToast]);
 
-  const buyNow = (
+  const buyNow = useCallback((
     product: Product,
     quantity = 1,
-    options: AddOptions = {},
+    options: AddToCartOptions = {},
   ) => {
     addToCart(product, quantity, options);
     setQuickViewProduct(null);
-    setCheckoutOpen(true);
-  };
 
-  const updateCartQuantity = (cartKey: string, amount: number) => {
+    if (!isAuthenticated) {
+      setCartOpen(false);
+      setCheckoutOpen(true);
+      showToast("Sign in to continue to checkout.", "error");
+      return;
+    }
+
+    setCheckoutOpen(true);
+  }, [addToCart, isAuthenticated, showToast]);
+
+  const updateCartQuantity = useCallback((cartKey: string, amount: number) => {
     setCartItems((items) =>
       items
         .map((item) =>
@@ -196,9 +240,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         )
         .filter((item) => item.quantity > 0),
     );
-  };
+  }, []);
 
-  const removeCartItem = (cartKey: string) => {
+  const removeCartItem = useCallback((cartKey: string) => {
     const item = cartItems.find((cartItem) => cartItem.cartKey === cartKey);
     setCartItems((items) =>
       items.filter((cartItem) => cartItem.cartKey !== cartKey),
@@ -207,14 +251,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (item) {
       showToast(`${item.name} removed from cart.`, "error");
     }
-  };
+  }, [cartItems, showToast]);
 
   const isWishlisted = useCallback(
     (productId: string) => wishlist.has(productId),
     [wishlist],
   );
 
-  const toggleWishlist = (product: Product) => {
+  const toggleWishlist = useCallback((product: Product) => {
     const alreadySaved = isWishlisted(product.id);
 
     setWishlistIds((current) =>
@@ -227,7 +271,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       `${product.name} ${alreadySaved ? "removed from" : "saved to"} wishlist.`,
       alreadySaved ? "error" : "success",
     );
-  };
+  }, [isWishlisted, showToast]);
 
   const markViewed = useCallback((productId: string) => {
     setRecentlyViewed((current) => [
@@ -236,19 +280,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     ].slice(0, 6));
   }, []);
 
-  const startCheckout = () => {
+  const startCheckout = useCallback(() => {
     if (!cartItems.length) {
       showToast("Add a skincare essential before entering secure checkout.", "error");
       return;
     }
 
+    if (!isAuthenticated) {
+      setCartOpen(false);
+      setCheckoutOpen(true);
+      showToast("Sign in to continue to checkout.", "error");
+      return;
+    }
+
     setCartOpen(false);
     setCheckoutOpen(true);
-  };
+  }, [cartItems.length, isAuthenticated, showToast]);
 
-  const placeOrder = () => {
+  const placeOrder = useCallback(() => {
     if (!cartItems.length) {
       showToast("Your cart is empty. Add a WICKED skincare essential to continue.", "error");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setCheckoutOpen(true);
+      showToast("Sign in to continue to checkout.", "error");
       return;
     }
 
@@ -256,45 +313,82 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setCheckoutOpen(false);
     setDiscountCode("");
     showToast("Order preview complete. A WICKED confirmation email would be sent next.");
-  };
+  }, [cartItems.length, isAuthenticated, showToast]);
 
-  const value: StoreContextValue = {
-    cartItems,
-    cartCount,
-    cartSubtotal,
-    discount,
-    shipping,
-    tax,
-    cartTotal,
-    wishlist,
-    wishlistCount,
-    recentlyViewed,
-    toast,
-    cartOpen,
-    searchOpen,
-    wishlistOpen,
-    checkoutOpen,
-    quickViewProduct,
-    discountCode,
-    addToCart,
-    buyNow,
-    updateCartQuantity,
-    removeCartItem,
-    isWishlisted,
-    toggleWishlist,
-    markViewed,
-    setCartOpen,
-    setSearchOpen,
-    setWishlistOpen,
-    setCheckoutOpen,
-    setQuickViewProduct,
-    openCartDrawer,
-    openWishlistDrawer,
-    setDiscountCode,
-    startCheckout,
-    placeOrder,
-    showToast,
-  };
+  const value: StoreContextValue = useMemo(
+    () => ({
+      cartItems,
+      cartCount,
+      cartSubtotal,
+      discount,
+      shipping,
+      tax,
+      cartTotal,
+      wishlist,
+      wishlistCount,
+      recentlyViewed,
+      toast,
+      cartOpen,
+      searchOpen,
+      wishlistOpen,
+      checkoutOpen,
+      cartAccountPromptVisible,
+      quickViewProduct,
+      discountCode,
+      addToCart,
+      buyNow,
+      updateCartQuantity,
+      removeCartItem,
+      isWishlisted,
+      toggleWishlist,
+      markViewed,
+      setCartOpen,
+      setSearchOpen,
+      setWishlistOpen,
+      setCheckoutOpen,
+      setQuickViewProduct,
+      openCartDrawer,
+      openWishlistDrawer,
+      dismissCartAccountPrompt,
+      setDiscountCode,
+      startCheckout,
+      placeOrder,
+      showToast,
+    }),
+    [
+      addToCart,
+      buyNow,
+      cartCount,
+      cartItems,
+      cartOpen,
+      cartSubtotal,
+      cartTotal,
+      checkoutOpen,
+      cartAccountPromptVisible,
+      discount,
+      discountCode,
+      dismissCartAccountPrompt,
+      isWishlisted,
+      markViewed,
+      openCartDrawer,
+      openWishlistDrawer,
+      placeOrder,
+      quickViewProduct,
+      recentlyViewed,
+      removeCartItem,
+      searchOpen,
+      shipping,
+      showToast,
+      startCheckout,
+      tax,
+      toast,
+      toggleWishlist,
+      updateCartQuantity,
+      wishlist,
+      wishlistCount,
+      wishlistOpen,
+    ],
+  );
 
   return (
     <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

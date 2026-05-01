@@ -1,23 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
-import { brand, collections, heroImage, products, reviews } from "./data/store";
-import { Icon } from "./components/Icons";
-import { ProductCard, ProductVisual } from "./components/ProductCard";
-import styles from "./components/Store.module.css";
+import { brand, collections, heroImage, products, reviews } from "@/data/store";
+import { Icon } from "@/components/ui/Icons";
+import { ProductCard, ProductVisual } from "@/components/product/ProductCard";
+import styles from "@/styles/store.module.css";
 
 export default function Home() {
   const featured = products.slice(0, 8);
   const spotlight = products[0];
 
   return (
-    <main>
+    <main className={styles.homePage}>
       <section className={styles.hero}>
         <Image
           className={styles.heroImage}
           src={heroImage}
           alt="Premium skincare bottle on a deep black studio background"
           fill
-          priority
+          loading="eager"
           sizes="100vw"
         />
         <div className={styles.heroContent}>
@@ -36,20 +36,6 @@ export default function Home() {
               Build a routine
             </Link>
           </div>
-          <dl className={styles.heroMetrics} aria-label="Store highlights">
-            <div>
-              <dt>24h</dt>
-              <dd>fast dispatch</dd>
-            </div>
-            <div>
-              <dt>4.9</dt>
-              <dd>routine rating</dd>
-            </div>
-            <div>
-              <dt>12</dt>
-              <dd>focused formulas</dd>
-            </div>
-          </dl>
         </div>
       </section>
 
@@ -176,7 +162,7 @@ export default function Home() {
 
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
-          <span className={styles.eyebrow}>Customer notes</span>
+          <span className={styles.eyebrow}>Customer reviews</span>
           <h2>Skincare people actually want to keep using.</h2>
         </div>
         <div className={styles.policyGrid}>
@@ -184,34 +170,8 @@ export default function Home() {
             <article className={styles.reviewCard} key={review.name}>
               <p>{review.quote}</p>
               <h3>{review.name}</h3>
-              <span className={styles.stockNote}>{review.role}</span>
             </article>
           ))}
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.infoCard}>
-          <span className={styles.eyebrow}>Skin notes</span>
-          <h2>Get the next WICKED drop first.</h2>
-          <p>
-            Early access to routine edits, restock alerts, and concise guidance
-            for building a cleaner skincare shelf.
-          </p>
-          <form className={styles.newsletterMini}>
-            <label className={styles.srOnly} htmlFor="home-newsletter">
-              Email address
-            </label>
-            <input
-              className={styles.input}
-              id="home-newsletter"
-              type="email"
-              placeholder="skin@domain.com"
-            />
-            <button className={styles.primaryButton} type="button">
-              <Icon name="arrow" />
-            </button>
-          </form>
         </div>
       </section>
     </main>

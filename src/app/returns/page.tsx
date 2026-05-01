@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Icon } from "@/app/components/Icons";
-import styles from "@/app/components/Store.module.css";
+import { Icon } from "@/components/ui/Icons";
+import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
   title: "Returns & Refunds | WICKED",

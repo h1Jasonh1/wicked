@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Icon } from "@/app/components/Icons";
-import styles from "@/app/components/Store.module.css";
+import { Icon } from "@/components/ui/Icons";
+import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
   title: "FAQs | WICKED",
@@ -13,7 +13,7 @@ const faqs = [
   ["How do I build a routine?", "Start with cleanser, add one targeted serum, seal with moisturiser, and finish mornings with SPF. Product pages explain where each WICKED formula fits."],
   ["Can I save products for later?", "Yes. Use the heart icon to add skincare to your saved routine. Your wishlist count is visible in the navigation."],
   ["Is checkout secure?", "The checkout preview is designed for encrypted payment entry, clear VAT-inclusive totals, and trusted card or wallet methods."],
-  ["When do new releases arrive?", "WICKED releases are focused and edited. Join Skin Notes for early access, restock timing, and routine guidance."],
+  ["When do new releases arrive?", "WICKED releases are focused and edited. New products and restocks appear in the shop as soon as they are available."],
   ["What if my item arrives damaged?", "Contact support within 72 hours with your order number and images. We will arrange a replacement, refund, or return label where appropriate."],
 ];
 

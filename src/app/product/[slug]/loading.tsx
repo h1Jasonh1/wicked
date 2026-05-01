@@ -1,4 +1,4 @@
-import styles from "@/app/components/Store.module.css";
+import styles from "@/styles/store.module.css";
 
 export default function LoadingProduct() {
   return (

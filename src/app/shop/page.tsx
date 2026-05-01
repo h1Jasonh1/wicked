@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { products } from "@/app/data/store";
+import { products } from "@/data/store";
 import ShopClient from "./shop-client";
 
 export const metadata: Metadata = {
@@ -13,7 +13,9 @@ type ShopPageProps = {
     filter?: string;
     collection?: string;
     category?: string;
+    concern?: string;
     q?: string;
+    skinType?: string;
   }>;
 };
 
@@ -25,13 +27,17 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       key={[
         params.category ?? "All",
         params.collection ?? "All",
+        params.skinType ?? "All",
+        params.concern ?? "All",
         params.filter ?? "All",
         params.q ?? "",
       ].join(":")}
       initialCategory={params.category ?? "All"}
       initialCollection={params.collection ?? "All"}
+      initialConcern={params.concern ?? "All"}
       initialFilter={params.filter ?? "All"}
       initialQuery={params.q ?? ""}
+      initialSkinType={params.skinType ?? "All"}
       products={products}
     />
   );

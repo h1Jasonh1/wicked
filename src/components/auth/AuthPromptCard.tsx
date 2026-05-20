@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
-import styles from "@/styles/store.module.css";
 
 export function AuthPromptCard({
   compact = false,
@@ -17,56 +17,46 @@ export function AuthPromptCard({
   onContinueShopping?: () => void;
   title?: string;
 }) {
-  const { isAuthenticated, registerPlaceholder, signInPlaceholder } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const pathname = usePathname() ?? "/";
+  const next = encodeURIComponent(pathname);
 
   if (isAuthenticated) {
     return null;
   }
 
-  const handleSignIn = () => {
-    signInPlaceholder();
-    onAuthenticated?.();
-  };
-
-  const handleRegister = () => {
-    registerPlaceholder();
-    onAuthenticated?.();
-  };
-
   return (
     <section
-      className={`${styles.authPromptCard} ${
-        compact ? styles.authPromptCardCompact : ""
-      }`}
+      className={`auth-prompt-card ${compact ? "auth-prompt-card-compact" : ""}`}
     >
-      <span className={styles.eyebrow}>Account</span>
+      <span className="eyebrow">Account</span>
       <h3>{title}</h3>
-      <p className={styles.mutedText}>{message}</p>
-      <small>
-        Placeholder auth only. A real provider will replace this with secure
-        sessions and backend-owned account data.
-      </small>
-      <div className={styles.formActions}>
-        <button className={styles.primaryButton} type="button" onClick={handleSignIn}>
+      <p className="muted-text">{message}</p>
+      <div className="form-actions">
+        <Link
+          className="primary-button"
+          href={`/auth/login?next=${next}`}
+          onClick={() => onAuthenticated?.()}
+        >
           Sign In
-        </button>
-        <button
-          className={styles.secondaryButton}
-          type="button"
-          onClick={handleRegister}
+        </Link>
+        <Link
+          className="secondary-button"
+          href={`/auth/register?next=${next}`}
+          onClick={() => onAuthenticated?.()}
         >
           Create Account
-        </button>
+        </Link>
         {onContinueShopping ? (
           <button
-            className={styles.textButton}
+            className="text-button"
             type="button"
             onClick={onContinueShopping}
           >
             Continue Shopping
           </button>
         ) : (
-          <Link className={styles.textButton} href="/shop">
+          <Link className="text-button" href="/shop">
             Continue Shopping
           </Link>
         )}

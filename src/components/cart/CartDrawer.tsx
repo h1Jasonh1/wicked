@@ -7,18 +7,14 @@ import { Icon } from "@/components/ui/Icons";
 import { Drawer } from "@/components/ui/Drawer";
 import { SummaryLine } from "@/components/ui/SummaryLine";
 import { ProductVisual } from "@/components/product/ProductCard";
-import { AuthPromptCard } from "@/components/auth/AuthPromptCard";
 import styles from "@/styles/store.module.css";
 
 export function CartDrawer() {
   const {
     cartItems,
-    cartAccountPromptVisible,
     cartOpen,
     cartSubtotal,
     cartTotal,
-    discount,
-    dismissCartAccountPrompt,
     removeCartItem,
     setCartOpen,
     shipping,
@@ -83,23 +79,13 @@ export function CartDrawer() {
             <div>
               <h3>Your cart is empty.</h3>
               <p className={styles.mutedText}>
-                Start with one WICKED essential. Totals, delivery, and VAT stay
+                Start with one SOO essential. Totals, delivery, and VAT stay
                 clear before checkout.
               </p>
             </div>
           </div>
         )}
       </div>
-      {cartItems.length && cartAccountPromptVisible ? (
-        <AuthPromptCard
-          compact
-          onAuthenticated={dismissCartAccountPrompt}
-          onContinueShopping={() => {
-            dismissCartAccountPrompt();
-            setCartOpen(false);
-          }}
-        />
-      ) : null}
       <div className={styles.drawerFooter}>
         <p className={styles.mutedText}>
           Free South Africa delivery applies above R750.
@@ -110,9 +96,6 @@ export function CartDrawer() {
           value={shipping ? formatPrice(shipping) : "Free"}
         />
         <SummaryLine label="VAT included" value={formatPrice(tax)} />
-        {discount ? (
-          <SummaryLine label="WICKED code" value={`-${formatPrice(discount)}`} />
-        ) : null}
         <div className={styles.summaryTotal}>
           <span>Total</span>
           <strong>{formatPrice(cartTotal)}</strong>

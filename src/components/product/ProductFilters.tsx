@@ -1,14 +1,18 @@
 "use client";
 
-import {
-  categories,
-  concernFilters,
-  shopFilters,
-  skinTypeFilters,
-} from "@/data/categories";
-import { collections } from "@/data/store";
+import { useMemo } from "react";
+import { useCatalog } from "@/components/catalog/CatalogProvider";
+import { collections, shopFilters } from "@/data/store";
 import { formatPrice } from "@/lib/formatters";
 import styles from "@/styles/store.module.css";
+
+function uniqueValues<T extends string>(values: Iterable<T | undefined | null>) {
+  const seen = new Set<T>();
+  for (const value of values) {
+    if (value) seen.add(value);
+  }
+  return Array.from(seen);
+}
 
 export function FilterPanel({
   category,
@@ -43,6 +47,26 @@ export function FilterPanel({
   onMaxPriceChange: (value: number) => void;
   onSkinTypeChange: (value: string) => void;
 }) {
+  const { products } = useCatalog();
+  const categories = useMemo(
+    () => ["All", ...uniqueValues(products.map((product) => product.category))],
+    [products],
+  );
+  const skinTypeFilters = useMemo(
+    () => [
+      "All",
+      ...uniqueValues(products.flatMap((product) => product.skinTypes)),
+    ],
+    [products],
+  );
+  const concernFilters = useMemo(
+    () => [
+      "All",
+      ...uniqueValues(products.flatMap((product) => product.concerns)),
+    ],
+    [products],
+  );
+
   return (
     <aside className={styles.filterPanel} aria-label="Shop filters">
       <div className={styles.drawerTop}>

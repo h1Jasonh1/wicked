@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import styles from "@/styles/store.module.css";
 
 export function SectionHeading({
   children,
@@ -9,8 +8,8 @@ export function SectionHeading({
   eyebrow: string;
 }) {
   return (
-    <div className={styles.sectionHeader}>
-      <span className={styles.eyebrow}>{eyebrow}</span>
+    <div className="section-header">
+      <span className="eyebrow">{eyebrow}</span>
       {children}
     </div>
   );

@@ -102,11 +102,13 @@ export default function ShopClient({
       return;
     }
 
-    window.requestAnimationFrame(() => {
+    const frame = window.requestAnimationFrame(() => {
       sortListRef.current
         ?.querySelector<HTMLButtonElement>('[aria-selected="true"]')
         ?.focus();
     });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [sort, sortOpen]);
 
   const filterState = useMemo(
@@ -275,7 +277,7 @@ export default function ShopClient({
       <section className={`${styles.shopPage} ${styles.shopBrowsePage}`} id="shop-products">
         <div className={styles.shopProductHeader}>
           <div>
-            <span className={styles.eyebrow}>Shop WICKED</span>
+            <span className={styles.eyebrow}>Shop SOO</span>
             <h1>Shop all</h1>
           </div>
           <div className={styles.shopResultMeta} aria-live="polite">
@@ -412,7 +414,7 @@ export default function ShopClient({
                   <h3>No skincare matches this routine.</h3>
                   <p className={styles.mutedText}>
                     Broaden your filters or reset the price range to view the
-                    full WICKED catalogue.
+                    full SOO catalogue.
                   </p>
                   <button
                     className={styles.primaryButton}

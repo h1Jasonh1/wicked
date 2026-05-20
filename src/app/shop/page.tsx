@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { products } from "@/data/store";
+import { loadProducts } from "@/lib/products";
 import ShopClient from "./shop-client";
 
 export const metadata: Metadata = {
-  title: "Shop WICKED | Premium Skincare",
+  title: "Shop SOO | Premium Skincare",
   description:
-    "Browse WICKED cleansers, serums, moisturisers, toners, SPF, masks, eye care and skincare bundles.",
+    "Browse SOO cleansers, serums, moisturisers, toners, SPF, masks, eye care and skincare bundles.",
 };
 
 type ShopPageProps = {
@@ -20,7 +20,10 @@ type ShopPageProps = {
 };
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
-  const params = await searchParams;
+  const [params, products] = await Promise.all([
+    searchParams,
+    loadProducts(),
+  ]);
 
   return (
     <ShopClient

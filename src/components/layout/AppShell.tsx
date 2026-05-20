@@ -1,27 +1,71 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/navigation/Navbar";
-import { MobileMenu } from "@/components/navigation/MobileMenu";
-import { CartDrawer } from "@/components/cart/CartDrawer";
-import { CheckoutDrawer } from "@/components/cart/CheckoutDrawer";
-import { WishlistDrawer } from "@/components/wishlist/WishlistDrawer";
-import { QuickViewModal } from "@/components/product/QuickViewModal";
 import { Icon } from "@/components/ui/Icons";
+
+// Overlays are gated on user interaction (open cart, open wishlist,
+// open mobile menu, etc.) so we don't ship their JS in the initial
+// bundle. ssr: false keeps the wrapper out of the static HTML where
+// these components would render nothing anyway. The chunks load on
+// first hover/intent because the trigger components stay in the main
+// bundle.
+const MobileMenu = dynamic(
+  () => import("@/components/navigation/MobileMenu").then((m) => m.MobileMenu),
+  { ssr: false },
+);
+const CartDrawer = dynamic(
+  () => import("@/components/cart/CartDrawer").then((m) => m.CartDrawer),
+  { ssr: false },
+);
+const CheckoutDrawer = dynamic(
+  () =>
+    import("@/components/cart/CheckoutDrawer").then((m) => m.CheckoutDrawer),
+  { ssr: false },
+);
+const WishlistDrawer = dynamic(
+  () =>
+    import("@/components/wishlist/WishlistDrawer").then((m) => m.WishlistDrawer),
+  { ssr: false },
+);
+const QuickViewModal = dynamic(
+  () =>
+    import("@/components/product/QuickViewModal").then((m) => m.QuickViewModal),
+  { ssr: false },
+);
+const AuthGateModal = dynamic(
+  () =>
+    import("@/components/auth/AuthGateModal").then((m) => m.AuthGateModal),
+  { ssr: false },
+);
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { StoreProvider, useStore } from "@/store/StoreProvider";
+import { CatalogProvider } from "@/components/catalog/CatalogProvider";
+import { StoreProvider, useUIStore } from "@/store/StoreProvider";
 import { useBodyScrollLock, useEscapeKey } from "@/hooks/useOverlayControls";
+import type { Product } from "@/types/product";
+import type { User } from "@/types/user";
 import styles from "@/styles/store.module.css";
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({
+  children,
+  initialProducts,
+  initialUser,
+}: {
+  children: React.ReactNode;
+  initialProducts: Product[];
+  initialUser: User | null;
+}) {
   return (
-    <AuthProvider>
-      <StoreProvider>
-        <ShellFrame>{children}</ShellFrame>
-      </StoreProvider>
+    <AuthProvider initialUser={initialUser}>
+      <CatalogProvider products={initialProducts}>
+        <StoreProvider>
+          <ShellFrame>{children}</ShellFrame>
+        </StoreProvider>
+      </CatalogProvider>
     </AuthProvider>
   );
 }
@@ -37,6 +81,7 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const {
+    authGate,
     cartOpen,
     checkoutOpen,
     quickViewProduct,
@@ -47,7 +92,27 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
     setWishlistOpen,
     toast,
     wishlistOpen,
-  } = useStore();
+  } = useUIStore();
+
+  // Sticky-mount the lazy overlays once they're first opened. Before
+  // that we don't load their JS chunks at all; after, they stay mounted
+  // so close animations and re-opens stay snappy. The set-during-render
+  // pattern is React's recommended alternative to a useEffect for
+  // derived "has-ever-been-true" state — React just re-renders once
+  // before paint without bouncing through commit-phase effects.
+  const [mountMobileMenu, setMountMobileMenu] = useState(false);
+  const [mountCartDrawer, setMountCartDrawer] = useState(false);
+  const [mountWishlistDrawer, setMountWishlistDrawer] = useState(false);
+  const [mountCheckoutDrawer, setMountCheckoutDrawer] = useState(false);
+  const [mountQuickView, setMountQuickView] = useState(false);
+  const [mountAuthGate, setMountAuthGate] = useState(false);
+
+  if (mobileOpen && !mountMobileMenu) setMountMobileMenu(true);
+  if (cartOpen && !mountCartDrawer) setMountCartDrawer(true);
+  if (wishlistOpen && !mountWishlistDrawer) setMountWishlistDrawer(true);
+  if (checkoutOpen && !mountCheckoutDrawer) setMountCheckoutDrawer(true);
+  if (quickViewProduct && !mountQuickView) setMountQuickView(true);
+  if (authGate && !mountAuthGate) setMountAuthGate(true);
 
   useEffect(() => {
     setSearchOpen(false);
@@ -60,12 +125,12 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
     previousPathname.current = pathname;
 
     if (hash) {
-      window.requestAnimationFrame(() => {
+      const frame = window.requestAnimationFrame(() => {
         document
           .getElementById(decodeURIComponent(hash))
           ?.scrollIntoView({ behavior: "smooth", block: "start" });
       });
-      return;
+      return () => window.cancelAnimationFrame(frame);
     }
 
     const wasAccountRoute = Boolean(
@@ -91,7 +156,7 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
         setIsScrolled(window.scrollY > 16);
         setShowTop(window.scrollY > 700);
         shellRef.current?.style.setProperty(
-          "--wicked-scroll",
+          "--soo-scroll",
           `${Math.min(window.scrollY * -0.025, 0)}px`,
         );
         frame = 0;
@@ -176,7 +241,8 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
     cartOpen ||
     checkoutOpen ||
     wishlistOpen ||
-    Boolean(quickViewProduct);
+    Boolean(quickViewProduct) ||
+    Boolean(authGate);
 
   useEscapeKey(true, closeOverlays);
   useBodyScrollLock(overlayOpen);
@@ -190,7 +256,9 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
         pathname={pathname}
         onOpenMobileMenu={() => setMobileOpen(true)}
       />
-      <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      {mountMobileMenu ? (
+        <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      ) : null}
 
       <div
         key={pageTransitionKey}
@@ -201,10 +269,11 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
         {children}
       </div>
       <Footer />
-      <CartDrawer />
-      <WishlistDrawer />
-      <CheckoutDrawer />
-      <QuickViewModal />
+      {mountCartDrawer ? <CartDrawer /> : null}
+      {mountWishlistDrawer ? <WishlistDrawer /> : null}
+      {mountCheckoutDrawer ? <CheckoutDrawer /> : null}
+      {mountQuickView ? <QuickViewModal /> : null}
+      {mountAuthGate ? <AuthGateModal /> : null}
 
       {toast ? (
         <div

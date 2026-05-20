@@ -7,7 +7,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
     <main className={styles.accountPage}>
       <section className={styles.routeHeroPanel}>
         <span className={styles.eyebrow}>Account</span>
-        <h1>Your WICKED account</h1>
+        <h1>Your SOO account</h1>
         <p className={styles.mutedText}>
           Backend-ready account surfaces for profile settings, saved delivery
           addresses, order history, wishlist access, and preferences.

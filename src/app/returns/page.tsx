@@ -4,9 +4,9 @@ import { Icon } from "@/components/ui/Icons";
 import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
-  title: "Returns & Refunds | WICKED",
+  title: "Returns & Refunds | SOO",
   description:
-    "WICKED skincare returns, refunds, exchange process and eligibility information.",
+    "SOO skincare returns, refunds, exchange process and eligibility information.",
 };
 
 export default function ReturnsPage() {

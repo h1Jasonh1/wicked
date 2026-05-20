@@ -1,7 +1,5 @@
 "use client";
 
-import styles from "@/styles/store.module.css";
-
 type TextFieldProps = {
   error?: string;
   label: string;
@@ -20,17 +18,17 @@ export function TextField({
   value,
 }: TextFieldProps) {
   return (
-    <label className={styles.field}>
+    <label className="field">
       <span>{label}</span>
       <input
-        className={styles.input}
+        className="field-input"
         type={type}
         value={value}
         placeholder={placeholder}
         aria-invalid={Boolean(error)}
         onChange={(event) => onChange(event.target.value)}
       />
-      {error ? <span className={styles.fieldError}>{error}</span> : null}
+      {error ? <span className="field-error">{error}</span> : null}
     </label>
   );
 }

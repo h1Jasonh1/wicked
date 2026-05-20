@@ -3,10 +3,10 @@
 import { useMemo } from "react";
 import type { Product } from "@/types/product";
 import { getHeaderSearchResults } from "@/lib/search";
-import { useStore } from "@/store/StoreProvider";
+import { useUIStore } from "@/store/StoreProvider";
 
 export function useHeaderSearch(term: string, products: Product[]) {
-  const { searchOpen, setSearchOpen } = useStore();
+  const { searchOpen, setSearchOpen } = useUIStore();
   const results = useMemo(
     () => getHeaderSearchResults(term, products),
     [products, term],

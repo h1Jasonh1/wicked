@@ -1,5 +1,9 @@
 import type { Product } from "@/types/product";
-import { searchableCategories, suggestedCategoryValues } from "@/data/categories";
+import {
+  buildSearchableCategories,
+  suggestedCategoryValues,
+  type SearchableCategory,
+} from "@/data/categories";
 
 export function normaliseSearchTerm(value: string) {
   return value.trim().toLowerCase();
@@ -11,6 +15,10 @@ export function matchesSearchTerm(value: string, query: string) {
 
 export function getHeaderSearchResults(term: string, products: Product[]) {
   const query = normaliseSearchTerm(term);
+  const searchableCategories = buildSearchableCategories(
+    products.map((product) => product.category),
+  );
+
   const categoryResults = query
     ? searchableCategories.filter((category) =>
         [category.label, category.value, ...category.aliases].some((value) =>
@@ -21,10 +29,7 @@ export function getHeaderSearchResults(term: string, products: Product[]) {
         .map((value) =>
           searchableCategories.find((category) => category.value === value),
         )
-        .filter(
-          (category): category is (typeof searchableCategories)[number] =>
-            Boolean(category),
-        );
+        .filter((category): category is SearchableCategory => Boolean(category));
 
   const productResults = query
     ? products.filter((product) =>

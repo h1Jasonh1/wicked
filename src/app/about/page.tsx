@@ -6,9 +6,9 @@ import { brand, collections } from "@/data/store";
 import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
-  title: "About WICKED | Premium Skincare With an Edge",
+  title: "About SOO | Premium Skincare With an Edge",
   description:
-    "Learn about WICKED's modern black skincare language, clean formula standards and routine-first product philosophy.",
+    "Learn about SOO's modern black skincare language, clean formula standards and routine-first product philosophy.",
 };
 
 export default function AboutPage() {
@@ -16,10 +16,10 @@ export default function AboutPage() {
     <main>
       <section className={styles.policyPage}>
         <div className={styles.policyHero}>
-          <span className={styles.eyebrow}>About WICKED</span>
+          <span className={styles.eyebrow}>About SOO</span>
           <h1>{brand.tagline}</h1>
           <p>
-            WICKED exists for customers who want high-performance skincare
+            SOO exists for customers who want high-performance skincare
             without noise. The palette is black, clean, and confident. The
             promise is simple: every formula must earn its place in the routine.
           </p>
@@ -34,7 +34,7 @@ export default function AboutPage() {
         <div className={styles.mediaFill}>
           <Image
             src={collections[1].image}
-            alt="Premium skincare serum styled in dark WICKED brand lighting"
+            alt="Premium skincare serum styled in dark SOO brand lighting"
             fill
             sizes="(max-width: 1000px) 100vw, 52vw"
           />
@@ -44,7 +44,7 @@ export default function AboutPage() {
           <h2>Built for skin that looks alive.</h2>
           <p>
             The brand started from a narrow idea: skincare can feel bold and
-            premium without becoming complicated. WICKED makes daily formulas
+            premium without becoming complicated. SOO makes daily formulas
             that look sharp, layer cleanly, and explain themselves quickly.
           </p>
         </div>
@@ -75,7 +75,7 @@ export default function AboutPage() {
           <span className={styles.eyebrow}>Quality promise</span>
           <h2>Edited skincare, not endless skincare.</h2>
           <p>
-            WICKED does not aim to overwhelm the shelf. Each product is selected
+            SOO does not aim to overwhelm the shelf. Each product is selected
             for a specific routine step, priced clearly, and supported with the
             information needed to buy with confidence.
           </p>
@@ -87,7 +87,7 @@ export default function AboutPage() {
         <div className={styles.mediaFill}>
           <Image
             src={collections[3].image}
-            alt="WICKED skincare routine products arranged as a premium set"
+            alt="SOO skincare routine products arranged as a premium set"
             fill
             sizes="(max-width: 1000px) 100vw, 52vw"
           />

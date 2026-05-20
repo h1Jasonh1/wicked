@@ -1,12 +1,9 @@
-import {
-  categories,
-  concernFilters,
-  products,
-  shopFilters,
-  skinTypeFilters,
-} from "./store";
-
-export { categories, concernFilters, shopFilters, skinTypeFilters };
+// Category UI metadata. The category *values* themselves come from the
+// live product catalogue at runtime — the labels, aliases, and ordering
+// below are presentation-layer concerns that don't need to live in the
+// DB. The category list itself is in the public.categories table on
+// Supabase, but the canonical category-text value is whatever sits on
+// each product row.
 
 export const categoryCards = [
   { category: "Cleansers", label: "Cleansers" },
@@ -35,15 +32,8 @@ export const categoryLabels: Record<string, string> = {
   "Sets / Bundles": "Bundles",
 };
 
-export const searchableCategories = categories
-  .filter((category) => category !== "All")
-  .map((category) => ({
-    aliases: categoryAliases[category] ?? [],
-    href: `/shop?category=${encodeURIComponent(category)}#shop-products`,
-    label: categoryLabels[category] ?? category,
-    value: category,
-  }));
-
+// Order in which categories appear in the empty-search "suggested"
+// dropdown. Values not present in the live catalogue are skipped.
 export const suggestedCategoryValues = [
   "Cleansers",
   "Serums",
@@ -52,8 +42,32 @@ export const suggestedCategoryValues = [
   "Masks",
 ] as const;
 
-export function getProductsByIds(ids: readonly string[]) {
-  return ids
-    .map((id) => products.find((product) => product.id === id))
-    .filter((product): product is (typeof products)[number] => Boolean(product));
+export type SearchableCategory = {
+  aliases: string[];
+  href: string;
+  label: string;
+  value: string;
+};
+
+/**
+ * Build the "searchable categories" list from a runtime product set.
+ * Returns one entry per distinct category in the catalogue (in the
+ * order they appear), skipping the synthetic "All" pseudo-category.
+ */
+export function buildSearchableCategories(
+  categoryValues: Iterable<string>,
+): SearchableCategory[] {
+  const seen = new Set<string>();
+  const out: SearchableCategory[] = [];
+  for (const value of categoryValues) {
+    if (!value || value === "All" || seen.has(value)) continue;
+    seen.add(value);
+    out.push({
+      aliases: categoryAliases[value] ?? [],
+      href: `/shop?category=${encodeURIComponent(value)}#shop-products`,
+      label: categoryLabels[value] ?? value,
+      value,
+    });
+  }
+  return out;
 }

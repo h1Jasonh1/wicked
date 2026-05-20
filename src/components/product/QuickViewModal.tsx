@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { formatPrice } from "@/lib/formatters";
 import type { Product } from "@/types/product";
-import { useStore } from "@/store/StoreProvider";
+import {
+  useCartStore,
+  useUIStore,
+  useWishlistStore,
+} from "@/store/StoreProvider";
 import { Icon } from "@/components/ui/Icons";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { QuantitySelector, VariantSelectors } from "@/components/product/ProductControls";
@@ -12,7 +16,7 @@ import { Stars } from "@/components/product/ProductCard";
 import styles from "@/styles/store.module.css";
 
 export function QuickViewModal() {
-  const { quickViewProduct, setQuickViewProduct } = useStore();
+  const { quickViewProduct, setQuickViewProduct } = useUIStore();
 
   return (
     <div
@@ -35,13 +39,9 @@ export function QuickViewModal() {
 }
 
 function QuickViewContent({ product }: { product: Product }) {
-  const {
-    addToCart,
-    buyNow,
-    isWishlisted,
-    setQuickViewProduct,
-    toggleWishlist,
-  } = useStore();
+  const { requestAddToCart, requestBuyNow } = useCartStore();
+  const { isWishlisted, requestToggleWishlist } = useWishlistStore();
+  const { setQuickViewProduct } = useUIStore();
   const [activeImage, setActiveImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] ?? "");
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] ?? "");
@@ -95,7 +95,7 @@ function QuickViewContent({ product }: { product: Product }) {
             className={styles.primaryButton}
             type="button"
             onClick={() =>
-              addToCart(product, quantity, {
+              requestAddToCart(product, quantity, {
                 variant: selectedVariant,
                 size: selectedSize,
                 openCart: true,
@@ -109,7 +109,7 @@ function QuickViewContent({ product }: { product: Product }) {
             className={styles.secondaryButton}
             type="button"
             onClick={() =>
-              buyNow(product, quantity, {
+              requestBuyNow(product, quantity, {
                 variant: selectedVariant,
                 size: selectedSize,
               })
@@ -121,7 +121,7 @@ function QuickViewContent({ product }: { product: Product }) {
             className={styles.textButton}
             type="button"
             aria-pressed={saved}
-            onClick={() => toggleWishlist(product)}
+            onClick={() => requestToggleWishlist(product)}
           >
             {saved ? "Saved" : "Save"}
             <Icon name="heart" />

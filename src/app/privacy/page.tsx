@@ -4,9 +4,9 @@ import { Icon } from "@/components/ui/Icons";
 import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | WICKED",
+  title: "Privacy Policy | SOO",
   description:
-    "WICKED privacy policy covering checkout, support and analytics information.",
+    "SOO privacy policy covering checkout, support and analytics information.",
 };
 
 export default function PrivacyPage() {
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
         <span className={styles.eyebrow}>Privacy Policy</span>
         <h1>Respect for customer information.</h1>
         <p>
-          WICKED handles checkout, support, and analytics data with restraint,
+          SOO handles checkout, support, and analytics data with restraint,
           clear consent, and only the information needed to serve the customer.
         </p>
       </section>

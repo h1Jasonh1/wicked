@@ -1,19 +1,406 @@
 @import "tailwindcss";
 
+/* =====================================================================
+ * Design tokens
+ *
+ * Single source of truth for the auren design system. Defined on :root
+ * so Tailwind utilities generated from @theme can resolve them outside
+ * the .shell wrapper. The same tokens are ALSO defined scoped to .shell
+ * in store.module.css for legacy CSS-module rules — both definitions
+ * stay in sync until store.module.css is deleted at the end of the
+ * Tailwind migration (see TAILWIND_MIGRATION.md).
+ * ===================================================================== */
 :root {
   --background: #050505;
   --foreground: #f7f4ee;
   --font-body: "Inter", "Avenir Next", "Segoe UI", Arial, Helvetica, sans-serif;
   --font-mono-stack: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* auren colours */
+  --auren-bg: #050505;
+  --auren-panel: #0d0d0f;
+  --auren-panel-soft: #151517;
+  --auren-line: rgba(255, 255, 255, 0.12);
+  --auren-line-strong: rgba(211, 190, 143, 0.34);
+  --auren-text: #f8f4ec;
+  --auren-text-soft: rgba(248, 244, 236, 0.76);
+  --auren-muted: rgba(248, 244, 236, 0.58);
+  --auren-accent: #d6bf8d;
+  --auren-accent-strong: #f0dcae;
+  --auren-danger: #e8a29b;
+
+  /* auren shape + motion */
+  --auren-radius: 8px;
+  --auren-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* layout dimensions */
+  --announcement-height: 34px;
+  --nav-height: 74px;
+  --container-pad: clamp(18px, 4vw, 56px);
+  --section-gap: clamp(76px, 9vw, 128px);
+  --heading-copy-extra-gap: clamp(6px, 1vw, 12px);
+  --product-card-padding: clamp(14px, 1.45vw, 18px);
+  --product-card-gap: 16px;
+  --product-info-gap: 11px;
+  --product-grid-gap: clamp(18px, 2.4vw, 26px);
 }
 
+/* =====================================================================
+ * Tailwind v4 theme
+ *
+ * Aliases the :root tokens into Tailwind's prefix-based system so
+ * utilities like bg-auren-panel, text-auren-muted, rounded-auren,
+ * ease-auren, px-container, animate-marquee, etc. are generated.
+ * ===================================================================== */
 @theme inline {
+  /* base */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-body);
   --font-mono: var(--font-mono-stack);
+
+  /* auren colours → bg-auren-*, text-auren-*, border-auren-* */
+  --color-auren-bg: var(--auren-bg);
+  --color-auren-panel: var(--auren-panel);
+  --color-auren-panel-soft: var(--auren-panel-soft);
+  --color-auren-line: var(--auren-line);
+  --color-auren-line-strong: var(--auren-line-strong);
+  --color-auren-text: var(--auren-text);
+  --color-auren-text-soft: var(--auren-text-soft);
+  --color-auren-muted: var(--auren-muted);
+  --color-auren-accent: var(--auren-accent);
+  --color-auren-accent-strong: var(--auren-accent-strong);
+  --color-auren-danger: var(--auren-danger);
+
+  /* shape + motion */
+  --radius-auren: var(--auren-radius);
+  --ease-auren: var(--auren-ease);
+
+  /* layout heights/widths → h-announcement, h-nav, etc. */
+  --spacing-announcement: var(--announcement-height);
+  --spacing-nav: var(--nav-height);
+
+  /* fluid spacing → px-container, gap-section, etc. */
+  --spacing-container: var(--container-pad);
+  --spacing-section: var(--section-gap);
+  --spacing-heading-gap: var(--heading-copy-extra-gap);
+  --spacing-product-card: var(--product-card-padding);
+  --spacing-product-gap: var(--product-card-gap);
+  --spacing-product-info: var(--product-info-gap);
+  --spacing-product-grid: var(--product-grid-gap);
+
+  /* keyframes → animate-marquee, animate-page-in, etc. */
+  --animate-marquee: marquee 28s linear infinite;
+  --animate-page-in: pageIn 420ms var(--auren-ease);
+  --animate-toast-in: toastIn 220ms var(--auren-ease);
+  --animate-search-scroll-hint: searchScrollHint 1.4s ease-in-out infinite;
 }
 
+/* =====================================================================
+ * Global keyframes
+ *
+ * Mirror the keyframes that exist (scoped) in store.module.css so the
+ * Tailwind animate-* utilities can resolve them outside any CSS-module
+ * scope. The local copies in store.module.css get scoped names like
+ * `pageIn_a4f` so there is no collision with these globals.
+ * ===================================================================== */
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes searchScrollHint {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
+/* =====================================================================
+ * Component primitives
+ *
+ * Visual primitives used across many components. Defining them here
+ * (rather than inlining the utility lists everywhere) prevents 30+
+ * files from carrying the same long className string. Coexists with
+ * scoped copies in store.module.css during migration; CSS-module
+ * scoping mangles the local names so there is no selector collision.
+ * ===================================================================== */
+@layer components {
+  .eyebrow {
+    color: var(--auren-accent);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .muted-text {
+    max-width: 690px;
+    margin: 0;
+    color: var(--auren-text-soft);
+    font-size: clamp(1rem, 1.3vw, 1.12rem);
+    line-height: 1.75;
+  }
+
+  .section-header {
+    display: grid;
+    gap: 14px;
+    margin-bottom: clamp(28px, 5vw, 54px);
+  }
+
+  .section-header h2 {
+    max-width: 780px;
+    margin: 0;
+    color: var(--auren-text);
+    font-size: clamp(2.2rem, 5vw, 5.8rem);
+    line-height: 0.95;
+    letter-spacing: -0.01em;
+  }
+
+  .section-header p {
+    max-width: 690px;
+    margin: 0;
+    color: var(--auren-text-soft);
+    font-size: clamp(1rem, 1.3vw, 1.12rem);
+    line-height: 1.75;
+  }
+
+  .section-header h2 + p {
+    margin-top: var(--heading-copy-extra-gap);
+  }
+
+  /* form field primitives — used in 14 files (77 references) */
+  .field {
+    display: grid;
+    gap: 8px;
+  }
+
+  .field > span {
+    color: var(--auren-muted);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .field-input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px;
+    border: 1px solid var(--auren-line);
+    border-radius: var(--auren-radius);
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--auren-text);
+    outline: 0;
+  }
+
+  .field-input:focus {
+    border-color: rgba(214, 191, 141, 0.7);
+    box-shadow: 0 0 0 4px rgba(214, 191, 141, 0.12);
+  }
+
+  .field-input[aria-invalid="true"] {
+    border-color: rgba(232, 162, 155, 0.74);
+    box-shadow: 0 0 0 4px rgba(232, 162, 155, 0.1);
+  }
+
+  .field-error {
+    color: var(--auren-danger);
+    font-size: 0.82rem;
+  }
+
+  /* form layout */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .field-full {
+    grid-column: 1 / -1;
+  }
+
+  .form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* status alerts */
+  .success-box {
+    border: 1px solid rgba(130, 214, 168, 0.36);
+    border-radius: var(--auren-radius);
+    background: rgba(130, 214, 168, 0.08);
+    color: #d8ffe6;
+    padding: 14px;
+  }
+
+  .error-box {
+    border: 1px solid rgba(232, 162, 155, 0.42);
+    border-radius: var(--auren-radius);
+    background: rgba(232, 162, 155, 0.09);
+    color: #ffe2de;
+    padding: 14px;
+  }
+
+  /* buttons — uppercase pill set used across the app */
+  .primary-button,
+  .secondary-button,
+  .text-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 999px;
+    padding: 0 20px;
+    min-height: 48px;
+    font-size: 0.76rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 220ms var(--auren-ease),
+      border-color 220ms var(--auren-ease),
+      background 220ms var(--auren-ease),
+      color 220ms var(--auren-ease);
+  }
+
+  .primary-button {
+    border: 1px solid var(--auren-accent);
+    background: linear-gradient(135deg, var(--auren-accent), #9f8759);
+    color: #050505;
+  }
+
+  .secondary-button {
+    border: 1px solid var(--auren-line);
+    background: rgba(255, 255, 255, 0.045);
+    color: var(--auren-text);
+  }
+
+  .text-button {
+    min-height: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--auren-accent);
+  }
+
+  .primary-button:hover,
+  .secondary-button:hover,
+  .text-button:hover {
+    transform: translateY(-2px);
+  }
+
+  .secondary-button:hover {
+    border-color: var(--auren-line-strong);
+    background: rgba(214, 191, 141, 0.1);
+  }
+
+  .primary-button:focus-visible,
+  .secondary-button:focus-visible,
+  .text-button:focus-visible {
+    outline: 2px solid rgba(240, 220, 174, 0.88);
+    outline-offset: 3px;
+  }
+
+  .primary-button:disabled,
+  .secondary-button:disabled,
+  .text-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* page + panel chrome shared by /checkout, /account/*, /auth/* */
+  .account-page {
+    width: min(1240px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: calc(var(--announcement-height) + var(--nav-height) + 42px) 0
+      var(--section-gap);
+  }
+
+  .route-hero-panel {
+    display: grid;
+    gap: 16px;
+    margin-bottom: clamp(28px, 5vw, 54px);
+    border: 1px solid var(--auren-line);
+    border-radius: var(--auren-radius);
+    background:
+      linear-gradient(135deg, rgba(214, 191, 141, 0.09), transparent 38%),
+      rgba(255, 255, 255, 0.035);
+    padding: clamp(24px, 5vw, 52px);
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.28);
+  }
+
+  .route-hero-panel h1 {
+    max-width: 900px;
+    margin: 0;
+    color: var(--auren-text);
+    font-size: clamp(2.5rem, 7vw, 6.2rem);
+    line-height: 0.95;
+    overflow-wrap: break-word;
+  }
+
+  .route-hero-panel h1 + p {
+    margin-top: var(--heading-copy-extra-gap);
+  }
+
+  .account-panel,
+  .auth-prompt-card {
+    display: grid;
+    gap: 18px;
+    padding: clamp(18px, 3vw, 28px);
+    border: 1px solid var(--auren-line);
+    border-radius: var(--auren-radius);
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.055), transparent 46%),
+      rgba(255, 255, 255, 0.035);
+    box-shadow: 0 18px 54px rgba(0, 0, 0, 0.22);
+  }
+
+  .account-panel h2,
+  .auth-prompt-card h3 {
+    margin: 0;
+    color: var(--auren-text);
+  }
+
+  .auth-prompt-card-compact {
+    gap: 12px;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =====================================================================
+ * Global element styles
+ * ===================================================================== */
 html {
   scroll-behavior: smooth;
 }
@@ -41,4 +428,18 @@ img {
 ::selection {
   background: #d8c59a;
   color: #050505;
+}
+
+/* Visually hide the document scrollbar (scrolling stays fully functional).
+   Toggled on <html> by the landing page only, so other routes keep their
+   scrollbar. */
+html.wk-hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html.wk-hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

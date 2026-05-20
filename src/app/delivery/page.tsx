@@ -4,9 +4,9 @@ import { Icon } from "@/components/ui/Icons";
 import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
-  title: "Delivery Information | WICKED",
+  title: "Delivery Information | SOO",
   description:
-    "Delivery options, processing times, tracking information and shipping costs for WICKED skincare orders.",
+    "Delivery options, processing times, tracking information and shipping costs for SOO skincare orders.",
 };
 
 const deliveryOptions = [
@@ -31,7 +31,7 @@ export default function DeliveryPage() {
         <span className={styles.eyebrow}>Delivery information</span>
         <h1>Fast delivery, careful skincare handling.</h1>
         <p>
-          WICKED orders are packed to protect bottles, jars, and tubes in
+          SOO orders are packed to protect bottles, jars, and tubes in
           transit. Delivery, VAT, and totals are shown clearly before checkout.
         </p>
         <Link className={styles.primaryButton} href="/shop">
@@ -100,7 +100,7 @@ export default function DeliveryPage() {
             <summary>Do you ship internationally?</summary>
             <div className={styles.accordionContent}>
               <p>
-                WICKED currently focuses on South Africa delivery. International
+                SOO currently focuses on South Africa delivery. International
                 availability will be announced on the website when it is ready.
               </p>
             </div>

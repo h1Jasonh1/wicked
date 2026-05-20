@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { products } from "@/data/products";
+import { useCatalog } from "@/components/catalog/CatalogProvider";
 import { formatPrice } from "@/lib/formatters";
 import { useWishlist } from "@/hooks/useWishlist";
 import { ProductVisual } from "@/components/product/ProductCard";
 import styles from "@/styles/store.module.css";
 
 export function AccountWishlist() {
-  const { isWishlisted, toggleWishlist } = useWishlist();
+  const { products } = useCatalog();
+  const { isWishlisted, requestToggleWishlist } = useWishlist();
   const savedProducts = products.filter((product) => isWishlisted(product.id));
 
   if (!savedProducts.length) {
@@ -17,8 +18,8 @@ export function AccountWishlist() {
         <div>
           <h3>Your wishlist is empty.</h3>
           <p className={styles.mutedText}>
-            Saved products will appear here once wishlist persistence is linked
-            to customer accounts.
+            Tap the heart on any product to save it here. Items sync across
+            devices once you&apos;re signed in.
           </p>
           <Link className={styles.primaryButton} href="/shop">
             Browse products
@@ -43,7 +44,7 @@ export function AccountWishlist() {
           <button
             className={styles.textButton}
             type="button"
-            onClick={() => toggleWishlist(product)}
+            onClick={() => requestToggleWishlist(product)}
           >
             Remove
           </button>

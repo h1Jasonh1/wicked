@@ -163,9 +163,9 @@
 
 .logoImage {
   display: block;
-  width: 100%;
+  width: auto;
   height: auto;
-  max-height: 26px;
+  max-height: 80px;
   object-fit: contain;
   transition: filter 220ms var(--auren-ease);
 }
@@ -526,7 +526,7 @@
 
 .heroImage {
   z-index: -2;
-  transform: translateY(var(--wicked-scroll, 0));
+  transform: translateY(var(--soo-scroll, 0));
   transition: transform 120ms linear;
 }
 
@@ -759,6 +759,82 @@
 .hero + .section > * {
   position: relative;
   z-index: 1;
+}
+
+/* ============================================================
+   Hero — full-screen video stage (homepage)
+   ============================================================ */
+.heroStage {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(20px, 3vh, 34px);
+  min-height: 100svh;
+  padding:
+    calc(var(--announcement-height) + var(--nav-height) + clamp(36px, 7svh, 88px))
+    clamp(16px, 4vw, 52px)
+    clamp(48px, 9svh, 104px);
+  overflow: hidden;
+  text-align: center;
+}
+
+.heroVideo {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 26%;
+}
+
+/* Scrim: keeps text legible over the video and fades into the page. */
+.heroStage::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(118% 78% at 50% 44%, transparent 36%, rgba(5, 5, 5, 0.48) 100%),
+    linear-gradient(
+      180deg,
+      rgba(5, 5, 5, 0.62) 0%,
+      rgba(5, 5, 5, 0.24) 28%,
+      rgba(5, 5, 5, 0.46) 58%,
+      rgba(5, 5, 5, 0.95) 88%,
+      #050505 100%
+    );
+  content: "";
+}
+
+.heroDisplay {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0;
+  font-size: clamp(3.2rem, 13.5vw, 13rem);
+  font-weight: 900;
+  line-height: 0.84;
+  letter-spacing: -0.035em;
+  color: var(--auren-text);
+  white-space: nowrap;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, 0.55);
+}
+
+.heroDisplay span:last-child {
+  color: var(--auren-accent);
+}
+
+.heroLede {
+  max-width: 560px;
+  margin: 0;
+  color: var(--auren-text-soft);
+  font-size: clamp(1rem, 1.3vw, 1.12rem);
+  line-height: 1.7;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.7);
 }
 
 .shopPage {
@@ -2298,6 +2374,40 @@
   padding: 14px;
 }
 
+.successBox {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.successClose {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.successClose:hover {
+  opacity: 1;
+  background: rgba(130, 214, 168, 0.18);
+}
+
+.successClose svg {
+  width: 12px;
+  height: 12px;
+}
+
 .errorBox {
   border-color: rgba(232, 162, 155, 0.42);
   background: rgba(232, 162, 155, 0.09);
@@ -2607,19 +2717,6 @@
   padding-top: 16px;
 }
 
-.summaryLine {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  color: var(--auren-muted);
-}
-
-.summaryLine strong,
-.summaryTotal strong {
-  color: var(--auren-text);
-}
-
 .summaryTotal {
   display: flex;
   align-items: center;
@@ -2627,6 +2724,10 @@
   gap: 16px;
   color: var(--auren-text);
   font-size: 1.12rem;
+}
+
+.summaryTotal strong {
+  color: var(--auren-text);
 }
 
 .modal {
@@ -3471,6 +3572,65 @@
   align-items: start;
 }
 
+.checkoutAddressSection {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.addressPickerList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.addressOption {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid var(--auren-line);
+  border-radius: var(--auren-radius);
+  background: rgba(255, 255, 255, 0.024);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.addressOption input[type="radio"] {
+  margin-top: 4px;
+}
+
+.addressOption:focus-within {
+  outline: 2px solid rgba(240, 220, 174, 0.88);
+  outline-offset: 3px;
+}
+
+.promoApplyRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.successHint {
+  color: #82d6a8;
+  font-size: 0.82rem;
+}
+
+.addressOption strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.addressOptionSelected {
+  border-color: var(--auren-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .accountProductGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3642,6 +3802,10 @@
 }
 
 @media (max-width: 820px) {
+  .heroDisplay {
+    font-size: clamp(2.8rem, 15vw, 8rem);
+  }
+
   .desktopNav {
     display: none;
   }
@@ -3834,6 +3998,10 @@
 }
 
 @media (max-width: 640px) {
+  .heroDisplay {
+    font-size: clamp(2.6rem, 17vw, 5rem);
+  }
+
   .navActions {
     gap: 5px;
   }
@@ -3849,7 +4017,7 @@
   }
 
   .logoImage {
-    max-height: 24px;
+    max-height: 56px;
   }
 
   .footerLogo {

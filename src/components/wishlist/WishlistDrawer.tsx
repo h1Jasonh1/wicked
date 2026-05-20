@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { products } from "@/data/products";
+import { useCatalog } from "@/components/catalog/CatalogProvider";
 import { formatPrice } from "@/lib/formatters";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
@@ -10,9 +10,14 @@ import { ProductVisual } from "@/components/product/ProductCard";
 import styles from "@/styles/store.module.css";
 
 export function WishlistDrawer() {
-  const { addToCart } = useCart();
-  const { isWishlisted, setWishlistOpen, toggleWishlist, wishlistOpen } =
+  const { requestAddToCart } = useCart();
+  const { isWishlisted, requestToggleWishlist, setWishlistOpen, wishlistOpen } =
     useWishlist();
+  // Read from the live catalog (Supabase-backed) — the previous import
+  // pulled from a static mock file whose product IDs don't match the
+  // real catalog, so wishlisted items never matched and the drawer
+  // appeared empty even when items were saved.
+  const { products } = useCatalog();
   const savedProducts = products.filter((product) => isWishlisted(product.id));
 
   return (
@@ -43,7 +48,7 @@ export function WishlistDrawer() {
                     type="button"
                     onClick={() => {
                       setWishlistOpen(false);
-                      addToCart(product, 1, { openCart: true });
+                      requestAddToCart(product, 1, { openCart: true });
                     }}
                   >
                     Add to cart
@@ -51,7 +56,7 @@ export function WishlistDrawer() {
                   <button
                     className={styles.textButton}
                     type="button"
-                    onClick={() => toggleWishlist(product)}
+                    onClick={() => requestToggleWishlist(product)}
                   >
                     Remove
                   </button>

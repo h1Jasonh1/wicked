@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { socialLinks } from "@/data/navigation";
+import { submitContactMessageAction } from "@/app/contact/actions";
 import { Icon } from "@/components/ui/Icons";
 import { TextField } from "@/components/ui/FormField";
 import styles from "@/styles/store.module.css";
@@ -16,10 +17,13 @@ export default function ContactClient() {
     email: "",
     subject: "",
     order: "",
+    phone: "",
     message: "",
   });
   const [errors, setErrors] = useState<Errors>({});
   const [sent, setSent] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const update = (field: keyof typeof values, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -48,16 +52,34 @@ export default function ContactClient() {
 
     setErrors(nextErrors);
 
-    if (!Object.keys(nextErrors).length) {
+    if (Object.keys(nextErrors).length) return;
+
+    setServerError(null);
+
+    const formData = new FormData();
+    formData.set("name", values.name);
+    formData.set("email", values.email);
+    formData.set("phone", values.phone);
+    formData.set("subject", values.subject);
+    formData.set("order", values.order);
+    formData.set("message", values.message);
+
+    startTransition(async () => {
+      const result = await submitContactMessageAction(formData);
+      if (!result.ok) {
+        setServerError(result.error);
+        return;
+      }
       setSent(true);
       setValues({
         name: "",
         email: "",
         subject: "",
         order: "",
+        phone: "",
         message: "",
       });
-    }
+    });
   };
 
   return (
@@ -67,7 +89,7 @@ export default function ContactClient() {
         <h1>Support that stays precise.</h1>
         <p>
           Ask about routines, ingredients, delivery, returns, or an order
-          already in motion. WICKED support replies with clear next steps, not
+          already in motion. SOO support replies with clear next steps, not
           scripted noise.
         </p>
       </section>
@@ -76,8 +98,31 @@ export default function ContactClient() {
         <form className={styles.formPanel} onSubmit={submit} noValidate>
           {sent ? (
             <div className={styles.successBox} role="status">
-              Your message has been received. A support reply would be sent to
-              your email next.
+              <span>
+                Your message has been received. SOO support will reply by email.
+              </span>
+              <button
+                type="button"
+                className={styles.successClose}
+                onClick={() => setSent(false)}
+                aria-label="Dismiss confirmation"
+              >
+                <svg
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 3l8 8M11 3l-8 8" />
+                </svg>
+              </button>
+            </div>
+          ) : null}
+          {serverError ? (
+            <div className={styles.errorBox} role="alert">
+              {serverError}
             </div>
           ) : null}
           <div className={styles.formGrid}>
@@ -122,8 +167,12 @@ export default function ContactClient() {
             </label>
           </div>
           <div className={styles.formActions}>
-            <button className={styles.primaryButton} type="submit">
-              Send message
+            <button
+              className={styles.primaryButton}
+              disabled={isPending}
+              type="submit"
+            >
+              {isPending ? "Sending…" : "Send message"}
               <Icon name="arrow" />
             </button>
             <Link className={styles.secondaryButton} href="/faqs">
@@ -134,7 +183,7 @@ export default function ContactClient() {
 
         <aside className={styles.summaryPanel}>
           <span className={styles.eyebrow}>Support details</span>
-          <Info icon="mail" title="Email" text="support@wicked.example" />
+          <Info icon="mail" title="Email" text="support@soo.example" />
           <Info icon="map" title="Hours" text="Monday to Friday, 9:00 to 17:00 SAST" />
           <div className={styles.socials}>
             <a

@@ -3,7 +3,7 @@ import { AccountWishlist } from "@/components/account/AccountWishlist";
 import styles from "@/styles/store.module.css";
 
 export const metadata: Metadata = {
-  title: "Wishlist | WICKED",
+  title: "Wishlist | SOO",
 };
 
 export default function AccountWishlistPage() {

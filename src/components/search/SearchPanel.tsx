@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { products } from "@/data/products";
+import { useCatalog } from "@/components/catalog/CatalogProvider";
 import { formatPrice } from "@/lib/formatters";
 import { useHeaderSearch } from "@/hooks/useSearch";
 import { Icon } from "@/components/ui/Icons";
@@ -10,6 +10,7 @@ import { ProductVisual, Stars } from "@/components/product/ProductCard";
 import styles from "@/styles/store.module.css";
 
 export function SearchPanel() {
+  const { products } = useCatalog();
   const [term, setTerm] = useState("");
   const searchPanelRef = useRef<HTMLElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -70,9 +71,12 @@ export function SearchPanel() {
   }, [updateSearchScrollHint]);
 
   useEffect(() => {
-    if (searchOpen) {
-      window.requestAnimationFrame(() => searchInputRef.current?.focus());
+    if (!searchOpen) {
+      return;
     }
+
+    const frame = window.requestAnimationFrame(() => searchInputRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
   }, [searchOpen]);
 
   useEffect(() => {
@@ -148,7 +152,7 @@ export function SearchPanel() {
       id="header-search-panel"
       ref={searchPanelRef}
       aria-hidden={!searchOpen}
-      aria-label="Search WICKED skincare"
+      aria-label="Search SOO skincare"
     >
       <div className={styles.headerSearchInner}>
         <div className={styles.searchInputWrap}>

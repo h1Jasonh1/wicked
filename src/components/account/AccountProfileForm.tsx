@@ -1,153 +1,73 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { AuthPromptCard } from "@/components/auth/AuthPromptCard";
 import { useAuth } from "@/components/auth/AuthProvider";
+import {
+  updateProfileAction,
+  type AccountActionState,
+} from "@/app/account/actions";
 import type { User } from "@/types/user";
 import styles from "@/styles/store.module.css";
 
-type ProfileFormValues = {
-  deliveryCity: string;
-  deliveryCountry: string;
-  deliveryLabel: string;
-  deliveryLine1: string;
-  deliveryLine2: string;
-  deliveryPhone: string;
-  deliveryPostalCode: string;
-  deliveryProvince: string;
-  deliveryRecipientName: string;
-  email: string;
-  marketingEmails: boolean;
-  name: string;
-  newPassword: string;
-  orderSmsUpdates: boolean;
-  phone: string;
-};
-
-type ProfileFormErrors = Partial<
-  Record<
-    | "deliveryCity"
-    | "deliveryLine1"
-    | "deliveryPostalCode"
-    | "email"
-    | "name"
-    | "newPassword"
-    | "phone",
-    string
-  >
->;
-
-type SaveStatus = {
-  message: string;
-  type: "error" | "success";
-} | null;
-
-function getInitialProfileValues(user: User | null): ProfileFormValues {
-  const defaultAddress = user?.addresses.find((address) => address.isDefault);
-
-  return {
-    deliveryCity: defaultAddress?.city ?? "",
-    deliveryCountry: defaultAddress?.country ?? "South Africa",
-    deliveryLabel: defaultAddress?.label ?? "Home",
-    deliveryLine1: defaultAddress?.line1 ?? "",
-    deliveryLine2: defaultAddress?.line2 ?? "",
-    deliveryPhone: defaultAddress?.phone ?? user?.phone ?? "",
-    deliveryPostalCode: defaultAddress?.postalCode ?? "",
-    deliveryProvince: defaultAddress?.province ?? "",
-    deliveryRecipientName: defaultAddress?.recipientName ?? user?.name ?? "",
-    email: user?.email ?? "",
-    marketingEmails: user?.preferences.marketingEmails ?? true,
-    name: user?.name ?? "",
-    newPassword: "",
-    orderSmsUpdates: user?.preferences.orderSmsUpdates ?? true,
-    phone: user?.phone ?? "",
-  };
-}
-
-function validateProfile(values: ProfileFormValues) {
-  const nextErrors: ProfileFormErrors = {};
-
-  if (!values.name.trim()) {
-    nextErrors.name = "Enter your full name.";
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
-    nextErrors.email = "Enter a valid email address.";
-  }
-
-  if (values.phone.trim() && values.phone.replace(/\D/g, "").length < 9) {
-    nextErrors.phone = "Enter a complete phone number.";
-  }
-
-  if (values.newPassword && values.newPassword.length < 8) {
-    nextErrors.newPassword = "Use at least 8 characters for password changes.";
-  }
-
-  if (!values.deliveryLine1.trim()) {
-    nextErrors.deliveryLine1 = "Enter a delivery address line.";
-  }
-
-  if (!values.deliveryCity.trim()) {
-    nextErrors.deliveryCity = "Enter a delivery city.";
-  }
-
-  if (!values.deliveryPostalCode.trim()) {
-    nextErrors.deliveryPostalCode = "Enter a postal code.";
-  }
-
-  return nextErrors;
-}
-
 export function AccountProfileForm({ serverUser }: { serverUser: User | null }) {
-  const { currentUser } = useAuth();
+  const { currentUser, isAuthReady } = useAuth();
   const user = currentUser ?? serverUser;
 
   if (!user) {
+    if (!isAuthReady) {
+      return <ProfileSkeleton />;
+    }
     return <AuthPromptCard title="Sign in to edit your profile" />;
   }
 
   return <AccountProfileEditor key={user.id} user={user} />;
 }
 
+function ProfileSkeleton() {
+  return (
+    <section className={styles.accountPanel} aria-label="Loading profile">
+      <span className={styles.skeletonLine} />
+      <span className={styles.skeletonLine} />
+      <span className={styles.skeletonLine} />
+      <span className={styles.skeletonLine} />
+    </section>
+  );
+}
+
 function AccountProfileEditor({ user }: { user: User }) {
-  const [values, setValues] = useState(() => getInitialProfileValues(user));
-  const [errors, setErrors] = useState<ProfileFormErrors>({});
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>(null);
+  const { refreshUser } = useAuth();
+  const [state, formAction, pending] = useActionState<AccountActionState, FormData>(
+    updateProfileAction,
+    null,
+  );
 
-  const updateValue = <Key extends keyof ProfileFormValues>(
-    key: Key,
-    value: ProfileFormValues[Key],
-  ) => {
-    setValues((current) => ({ ...current, [key]: value }));
-    setErrors((current) => ({ ...current, [key]: undefined }));
-    setSaveStatus(null);
-  };
+  // Controlled state for the toggles + phone so we can:
+  //  - disable the SMS marketing toggle until a phone number is saved
+  //  - guarantee what the user sees in the UI is what we send to the
+  //    server action (avoids the "I toggled it but it didn't save" report)
+  const [phone, setPhone] = useState(user.phone);
+  const [marketingEmails, setMarketingEmails] = useState(
+    user.preferences.marketingEmails,
+  );
+  const [orderSmsUpdates, setOrderSmsUpdates] = useState(
+    user.preferences.orderSmsUpdates,
+  );
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const phoneSaved = (user.phone ?? "").trim().length > 0;
 
-    const nextErrors = validateProfile(values);
-    setErrors(nextErrors);
-
-    if (Object.keys(nextErrors).length) {
-      setSaveStatus({
-        type: "error",
-        message: "Please fix the highlighted profile fields before saving.",
-      });
-      return;
+  useEffect(() => {
+    if (state?.success) {
+      void refreshUser();
     }
+  }, [refreshUser, state]);
 
-    // TODO(auth): Persist profile updates through the authenticated customer
-    // profile API. Password changes should use the auth provider's secure flow.
-    setSaveStatus({
-      type: "success",
-      message:
-        "Profile changes validated locally. A real account API will save these later.",
-    });
-  };
+  // If a user clears their phone number, force the SMS preference back off
+  // before submit so we never store "SMS opt-in with no phone".
+  const effectiveSms = phone.trim().length > 0 ? orderSmsUpdates : false;
 
   return (
-    <form className={styles.accountPanel} noValidate onSubmit={handleSubmit}>
+    <form action={formAction} className={styles.accountPanel} noValidate>
       <div className={styles.panelHeader}>
         <div>
           <span className={styles.eyebrow}>Profile</span>
@@ -159,237 +79,88 @@ function AccountProfileEditor({ user }: { user: User }) {
         <label className={styles.field}>
           <span>Full name</span>
           <input
-            aria-invalid={Boolean(errors.name)}
             autoComplete="name"
             className={styles.input}
-            value={values.name}
-            onChange={(event) => updateValue("name", event.target.value)}
+            defaultValue={user.name}
+            name="full_name"
+            required
           />
-          {errors.name ? (
-            <span className={styles.fieldError}>{errors.name}</span>
-          ) : null}
         </label>
 
         <label className={styles.field}>
           <span>Email address</span>
           <input
-            aria-invalid={Boolean(errors.email)}
             autoComplete="email"
             className={styles.input}
+            defaultValue={user.email}
+            disabled
+            name="email"
             type="email"
-            value={values.email}
-            onChange={(event) => updateValue("email", event.target.value)}
           />
-          {errors.email ? (
-            <span className={styles.fieldError}>{errors.email}</span>
-          ) : null}
         </label>
 
         <label className={styles.field}>
           <span>Phone number</span>
           <input
-            aria-invalid={Boolean(errors.phone)}
             autoComplete="tel"
             className={styles.input}
+            name="phone"
+            onChange={(event) => setPhone(event.target.value)}
+            placeholder="+27 82 555 0140"
             type="tel"
-            value={values.phone}
-            onChange={(event) => updateValue("phone", event.target.value)}
+            value={phone}
           />
-          {errors.phone ? (
-            <span className={styles.fieldError}>{errors.phone}</span>
-          ) : null}
         </label>
-
-        <label className={styles.field}>
-          <span>Change password placeholder</span>
-          <input
-            aria-invalid={Boolean(errors.newPassword)}
-            autoComplete="new-password"
-            className={styles.input}
-            placeholder="New password"
-            type="password"
-            value={values.newPassword}
-            onChange={(event) => updateValue("newPassword", event.target.value)}
-          />
-          {errors.newPassword ? (
-            <span className={styles.fieldError}>{errors.newPassword}</span>
-          ) : null}
-        </label>
-
-        <div className={`${styles.accountFormSection} ${styles.fieldFull}`}>
-          <div>
-            <span className={styles.eyebrow}>Delivery address</span>
-            <h3>Default delivery details</h3>
-          </div>
-          <div className={styles.formGrid}>
-            <label className={styles.field}>
-              <span>Address label</span>
-              <input
-                autoComplete="address-level4"
-                className={styles.input}
-                value={values.deliveryLabel}
-                onChange={(event) =>
-                  updateValue("deliveryLabel", event.target.value)
-                }
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>Recipient name</span>
-              <input
-                autoComplete="name"
-                className={styles.input}
-                value={values.deliveryRecipientName}
-                onChange={(event) =>
-                  updateValue("deliveryRecipientName", event.target.value)
-                }
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>Delivery phone</span>
-              <input
-                autoComplete="tel"
-                className={styles.input}
-                type="tel"
-                value={values.deliveryPhone}
-                onChange={(event) =>
-                  updateValue("deliveryPhone", event.target.value)
-                }
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>Address line 1</span>
-              <input
-                aria-invalid={Boolean(errors.deliveryLine1)}
-                autoComplete="address-line1"
-                className={styles.input}
-                value={values.deliveryLine1}
-                onChange={(event) =>
-                  updateValue("deliveryLine1", event.target.value)
-                }
-              />
-              {errors.deliveryLine1 ? (
-                <span className={styles.fieldError}>{errors.deliveryLine1}</span>
-              ) : null}
-            </label>
-
-            <label className={styles.field}>
-              <span>Address line 2 optional</span>
-              <input
-                autoComplete="address-line2"
-                className={styles.input}
-                value={values.deliveryLine2}
-                onChange={(event) =>
-                  updateValue("deliveryLine2", event.target.value)
-                }
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>City</span>
-              <input
-                aria-invalid={Boolean(errors.deliveryCity)}
-                autoComplete="address-level2"
-                className={styles.input}
-                value={values.deliveryCity}
-                onChange={(event) =>
-                  updateValue("deliveryCity", event.target.value)
-                }
-              />
-              {errors.deliveryCity ? (
-                <span className={styles.fieldError}>{errors.deliveryCity}</span>
-              ) : null}
-            </label>
-
-            <label className={styles.field}>
-              <span>Province</span>
-              <input
-                autoComplete="address-level1"
-                className={styles.input}
-                value={values.deliveryProvince}
-                onChange={(event) =>
-                  updateValue("deliveryProvince", event.target.value)
-                }
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>Postal code</span>
-              <input
-                aria-invalid={Boolean(errors.deliveryPostalCode)}
-                autoComplete="postal-code"
-                className={styles.input}
-                value={values.deliveryPostalCode}
-                onChange={(event) =>
-                  updateValue("deliveryPostalCode", event.target.value)
-                }
-              />
-              {errors.deliveryPostalCode ? (
-                <span className={styles.fieldError}>
-                  {errors.deliveryPostalCode}
-                </span>
-              ) : null}
-            </label>
-
-            <label className={styles.field}>
-              <span>Country</span>
-              <input
-                autoComplete="country-name"
-                className={styles.input}
-                value={values.deliveryCountry}
-                onChange={(event) =>
-                  updateValue("deliveryCountry", event.target.value)
-                }
-              />
-            </label>
-          </div>
-        </div>
 
         <fieldset className={`${styles.formFieldset} ${styles.fieldFull}`}>
-          <legend>Account preferences</legend>
+          <legend>Marketing preferences</legend>
           <label>
             <input
-              checked={values.marketingEmails}
+              checked={marketingEmails}
+              name="marketing_emails"
+              onChange={(event) => setMarketingEmails(event.target.checked)}
               type="checkbox"
-              onChange={(event) =>
-                updateValue("marketingEmails", event.target.checked)
-              }
             />
-            Marketing emails
+            Marketing emails — product launches, restocks, offers
           </label>
-          <label>
+          <label
+            aria-disabled={!phoneSaved || undefined}
+            style={
+              phoneSaved
+                ? undefined
+                : { opacity: 0.55, cursor: "not-allowed" }
+            }
+          >
             <input
-              checked={values.orderSmsUpdates}
+              checked={effectiveSms}
+              disabled={!phoneSaved}
+              name="order_sms_updates"
+              onChange={(event) => setOrderSmsUpdates(event.target.checked)}
               type="checkbox"
-              onChange={(event) =>
-                updateValue("orderSmsUpdates", event.target.checked)
-              }
             />
-            SMS order updates
+            SMS marketing — flash offers and limited drops
           </label>
+          {!phoneSaved ? (
+            <small className={styles.mutedText}>
+              Add a phone number above and save to enable SMS marketing.
+            </small>
+          ) : null}
         </fieldset>
       </div>
 
-      <p className={styles.placeholderNote}>
-        Placeholder profile form only. Secure account details will be saved by
-        the backend account API later.
-      </p>
-
-      {saveStatus ? (
-        <div
-          className={
-            saveStatus.type === "success" ? styles.successBox : styles.errorBox
-          }
-          role="status"
-        >
-          {saveStatus.message}
+      {state?.error ? (
+        <div className={styles.errorBox} role="alert">
+          {state.error}
+        </div>
+      ) : null}
+      {state?.success ? (
+        <div className={styles.successBox} role="status">
+          {state.success}
         </div>
       ) : null}
 
-      <button className={styles.primaryButton} type="submit">
-        Save changes
+      <button className={styles.primaryButton} disabled={pending} type="submit">
+        {pending ? "Saving…" : "Save changes"}
       </button>
     </form>
   );

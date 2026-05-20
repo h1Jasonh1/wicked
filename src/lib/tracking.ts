@@ -1,5 +1,9 @@
-import type { OrderStatus, TrackingProvider, TrackingStatusSnapshot } from "@/types/order";
-import { getOrderById } from "@/lib/orders";
+import type {
+  OrderStatus,
+  TrackingProvider,
+  TrackingStatusSnapshot,
+} from "@/types/order";
+import { loadOrderByNumber } from "@/lib/supabase/orders";
 
 export type CourierStatusUpdate = {
   provider: TrackingProvider;
@@ -10,8 +14,10 @@ export type CourierStatusUpdate = {
   lastUpdated: string;
 };
 
-export async function getTrackingStatus(orderId: string): Promise<TrackingStatusSnapshot | null> {
-  const order = getOrderById(orderId);
+export async function getTrackingStatus(
+  orderNumber: string,
+): Promise<TrackingStatusSnapshot | null> {
+  const order = await loadOrderByNumber(orderNumber);
 
   if (!order) {
     return null;

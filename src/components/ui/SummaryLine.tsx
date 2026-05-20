@@ -1,10 +1,8 @@
-import styles from "@/styles/store.module.css";
-
 export function SummaryLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className={styles.summaryLine}>
+    <div className="flex items-center justify-between gap-4 text-auren-muted">
       <span>{label}</span>
-      <strong>{value}</strong>
+      <strong className="text-auren-text">{value}</strong>
     </div>
   );
 }

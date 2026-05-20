@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { OrderTracker } from "@/components/orders/OrderTracker";
 import { SummaryLine } from "@/components/ui/SummaryLine";
 import { formatPrice } from "@/lib/formatters";
-import { getOrderById } from "@/lib/orders";
+import { loadOrderByNumber } from "@/lib/supabase/orders";
 import styles from "@/styles/store.module.css";
 
 type OrderDetailPageProps = {
@@ -14,17 +14,14 @@ export async function generateMetadata({
   params,
 }: OrderDetailPageProps): Promise<Metadata> {
   const { orderId } = await params;
-
-  return {
-    title: `${orderId} | WICKED Order Tracking`,
-  };
+  return { title: `${orderId} | SOO Order Tracking` };
 }
 
 export default async function AccountOrderDetailPage({
   params,
 }: OrderDetailPageProps) {
   const { orderId } = await params;
-  const order = getOrderById(orderId);
+  const order = await loadOrderByNumber(orderId);
 
   if (!order) {
     notFound();

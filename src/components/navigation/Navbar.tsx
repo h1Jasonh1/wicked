@@ -4,11 +4,18 @@ import Link from "next/link";
 import { brand } from "@/data/store";
 import { primaryNav } from "@/data/navigation";
 import { isActivePath } from "@/lib/routing";
+import { BrandLogo } from "@/components/navigation/BrandLogo";
 import { Icon } from "@/components/ui/Icons";
 import { SearchPanel } from "@/components/search/SearchPanel";
-import { BrandLogo } from "./BrandLogo";
-import { useStore } from "@/store/StoreProvider";
-import styles from "@/styles/store.module.css";
+import {
+  useCartStore,
+  useUIStore,
+  useWishlistStore,
+} from "@/store/StoreProvider";
+import styles from "@/styles/navbar.module.css";
+
+// Centre links — the logo already carries "/", so Home is dropped here.
+const centreLinks = primaryNav.filter((item) => item.href !== "/");
 
 export function Navbar({
   isScrolled,
@@ -21,35 +28,38 @@ export function Navbar({
   onOpenMobileMenu: () => void;
   pathname: string;
 }) {
-  const {
-    cartCount,
-    openCartDrawer,
-    openWishlistDrawer,
-    searchOpen,
-    setSearchOpen,
-    wishlistCount,
-  } = useStore();
+  // Three focused store slices: a cart tick doesn't re-render the search
+  // panel, a wishlist toggle doesn't re-render the bag badge.
+  const { cartCount } = useCartStore();
+  const { wishlistCount } = useWishlistStore();
+  const { openCartDrawer, openWishlistDrawer, searchOpen, setSearchOpen } =
+    useUIStore();
+
   const accountActive = isActivePath(pathname, "/account");
-  const toggleSearch = () => setSearchOpen((open) => !open);
+  // The nav floats transparent only over the home hero. Everywhere else
+  // — and once scrolled, or while the search panel is open — it collapses
+  // to the smoky dark blurred bar.
+  const isHome = pathname === "/";
+  const solid = !isHome || isScrolled || searchOpen;
 
   return (
     <header
-      className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""} ${
-        searchOpen ? styles.navbarSearchOpen : ""
+      className={`${styles.nav} ${solid ? styles.navScrolled : ""} ${
+        searchOpen ? styles.navSearchOpen : ""
       }`}
     >
-      <div className={styles.navbarRow}>
+      <div className={styles.navRow}>
         <Link
-          className={styles.logo}
+          className={styles.navMark}
           href="/"
           aria-label={`${brand.name} home`}
           onClick={() => setSearchOpen(false)}
         >
-          <BrandLogo variant="white" eager />
+          <BrandLogo placement="nav" variant="white" eager />
         </Link>
 
-        <nav className={styles.desktopNav} aria-label="Primary navigation">
-          {primaryNav.map((item) => (
+        <nav className={styles.navLinks} aria-label="Primary navigation">
+          {centreLinks.map((item) => (
             <Link
               key={item.href}
               className={isActivePath(pathname, item.href) ? styles.activeLink : ""}
@@ -63,31 +73,26 @@ export function Navbar({
 
         <div className={styles.navActions}>
           <button
-            className={`${styles.iconButton} ${
-              searchOpen ? styles.iconButtonActive : ""
-            }`}
+            className={`${styles.navIcon} ${searchOpen ? styles.navIconActive : ""}`}
             type="button"
             aria-label={searchOpen ? "Close search" : "Search products"}
             aria-controls="header-search-panel"
             aria-expanded={searchOpen}
-            aria-pressed={searchOpen}
-            onClick={toggleSearch}
+            onClick={() => setSearchOpen((open) => !open)}
           >
             <Icon name="search" />
           </button>
           <Link
-            className={`${styles.iconButton} ${styles.accountIconButton} ${
-              accountActive ? styles.iconButtonActive : ""
-            }`}
+            className={`${styles.navIcon} ${accountActive ? styles.navIconActive : ""}`}
             href="/account"
             aria-label="Account"
-            aria-current={accountActive ? "location" : undefined}
+            aria-current={accountActive ? "page" : undefined}
             onClick={() => setSearchOpen(false)}
           >
             <Icon name="user" />
           </Link>
           <button
-            className={styles.iconButton}
+            className={styles.navIcon}
             type="button"
             aria-label="Open wishlist"
             onClick={() => {
@@ -96,10 +101,12 @@ export function Navbar({
             }}
           >
             <Icon name="heart" />
-            {wishlistCount ? <span className={styles.badge}>{wishlistCount}</span> : null}
+            {wishlistCount ? (
+              <span className={styles.iconBadge}>{wishlistCount}</span>
+            ) : null}
           </button>
           <button
-            className={styles.iconButton}
+            className={styles.navIcon}
             type="button"
             aria-label="Open cart"
             onClick={() => {
@@ -108,10 +115,12 @@ export function Navbar({
             }}
           >
             <Icon name="bag" />
-            {cartCount ? <span className={styles.badge}>{cartCount}</span> : null}
+            {cartCount ? (
+              <span className={styles.iconBadge}>{cartCount}</span>
+            ) : null}
           </button>
           <button
-            className={`${styles.iconButton} ${styles.menuButton}`}
+            className={`${styles.navIcon} ${styles.menuButton}`}
             type="button"
             aria-label="Open menu"
             aria-expanded={mobileOpen}
@@ -124,6 +133,7 @@ export function Navbar({
           </button>
         </div>
       </div>
+
       <SearchPanel />
     </header>
   );

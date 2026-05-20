@@ -16,11 +16,11 @@ export const supportLinks = [
 export const socialLinks = {
   instagram: {
     href: "https://www.instagram.com/wickedskincc/",
-    ariaLabel: "Open WICKED on Instagram",
+    ariaLabel: "Open SOO on Instagram",
   },
   tiktok: {
     href: "https://www.tiktok.com/@wickedskin",
-    ariaLabel: "Open WICKED on TikTok",
+    ariaLabel: "Open SOO on TikTok",
   },
 } as const;
 
@@ -30,5 +30,5 @@ export const announcementItems = [
   "CLEAN FORMULAS. BOLD RESULTS.",
   "EASY RETURNS",
   "SECURE CHECKOUT",
-  "WICKED SKINCARE",
+  "SOO SKINCARE",
 ] as const;

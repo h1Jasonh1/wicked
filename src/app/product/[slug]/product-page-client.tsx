@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { getProductsByIds } from "@/data/categories";
+import { useCatalog } from "@/components/catalog/CatalogProvider";
 import { formatPrice } from "@/lib/formatters";
 import type { Product } from "@/types/product";
 import { ProductGallery } from "@/components/product/ProductGallery";
@@ -13,7 +13,11 @@ import {
 import { ProductRail } from "@/components/sections/ProductRail";
 import { Icon } from "@/components/ui/Icons";
 import { Stars } from "@/components/product/ProductCard";
-import { useStore } from "@/store/StoreProvider";
+import {
+  useCartStore,
+  useUIStore,
+  useWishlistStore,
+} from "@/store/StoreProvider";
 import styles from "@/styles/store.module.css";
 
 export default function ProductPageClient({
@@ -23,14 +27,10 @@ export default function ProductPageClient({
   product: Product;
   relatedProducts: Product[];
 }) {
-  const {
-    addToCart,
-    buyNow,
-    isWishlisted,
-    markViewed,
-    recentlyViewed,
-    toggleWishlist,
-  } = useStore();
+  const { requestAddToCart, requestBuyNow } = useCartStore();
+  const { isWishlisted, requestToggleWishlist } = useWishlistStore();
+  const { markViewed, recentlyViewed } = useUIStore();
+  const { productsById } = useCatalog();
   const [activeImage, setActiveImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0] ?? "");
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] ?? "");
@@ -43,11 +43,12 @@ export default function ProductPageClient({
 
   const recentlyViewedProducts = useMemo(
     () =>
-      getProductsByIds(recentlyViewed.filter((id) => id !== product.id)).slice(
-        0,
-        4,
-      ),
-    [product.id, recentlyViewed],
+      recentlyViewed
+        .filter((id) => id !== product.id)
+        .map((id) => productsById.get(id))
+        .filter((item): item is Product => Boolean(item))
+        .slice(0, 4),
+    [product.id, productsById, recentlyViewed],
   );
 
   const selectedOptions = {
@@ -98,7 +99,7 @@ export default function ProductPageClient({
                 className={styles.primaryButton}
                 type="button"
                 onClick={() =>
-                  addToCart(product, quantity, {
+                  requestAddToCart(product, quantity, {
                     ...selectedOptions,
                     openCart: true,
                   })
@@ -110,7 +111,7 @@ export default function ProductPageClient({
               <button
                 className={styles.secondaryButton}
                 type="button"
-                onClick={() => buyNow(product, quantity, selectedOptions)}
+                onClick={() => requestBuyNow(product, quantity, selectedOptions)}
               >
                 Buy now
               </button>
@@ -118,7 +119,7 @@ export default function ProductPageClient({
                 className={styles.button}
                 type="button"
                 aria-pressed={saved}
-                onClick={() => toggleWishlist(product)}
+                onClick={() => requestToggleWishlist(product)}
               >
                 <Icon name="heart" />
                 {saved ? "Saved" : "Save"}

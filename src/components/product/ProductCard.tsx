@@ -6,7 +6,11 @@ import type { Product } from "@/types/product";
 import { formatPrice } from "@/lib/formatters";
 import { Icon } from "@/components/ui/Icons";
 import styles from "@/styles/store.module.css";
-import { useStore } from "@/store/StoreProvider";
+import {
+  useCartStore,
+  useUIStore,
+  useWishlistStore,
+} from "@/store/StoreProvider";
 
 export function Stars({
   rating,
@@ -36,12 +40,9 @@ export function Stars({
 }
 
 export function ProductCard({ product }: { product: Product }) {
-  const {
-    addToCart,
-    isWishlisted,
-    setQuickViewProduct,
-    toggleWishlist,
-  } = useStore();
+  const { requestAddToCart } = useCartStore();
+  const { isWishlisted, requestToggleWishlist } = useWishlistStore();
+  const { setQuickViewProduct } = useUIStore();
   const saved = isWishlisted(product.id);
 
   return (
@@ -63,7 +64,7 @@ export function ProductCard({ product }: { product: Product }) {
             saved ? "from" : "to"
           } wishlist`}
           aria-pressed={saved}
-          onClick={() => toggleWishlist(product)}
+          onClick={() => requestToggleWishlist(product)}
         >
           <Icon name="heart" />
         </button>
@@ -95,7 +96,7 @@ export function ProductCard({ product }: { product: Product }) {
         <button
           className={styles.secondaryButton}
           type="button"
-          onClick={() => addToCart(product, 1, { openCart: true })}
+          onClick={() => requestAddToCart(product, 1, { openCart: true })}
         >
           Add to cart
           <Icon name="bag" />
@@ -143,21 +144,21 @@ export function ProductVisual({
           <span className={`${styles.mockProduct} ${styles.mockBottle}`}>
             <span className={styles.mockPump} />
             <span className={styles.mockLabel}>
-              <strong>WICKED</strong>
+              <strong>SOO</strong>
               <small>cleanse</small>
             </span>
           </span>
           <span className={`${styles.mockProduct} ${styles.mockDropper}`}>
             <span className={styles.mockDropperCap} />
             <span className={styles.mockLabel}>
-              <strong>WICKED</strong>
+              <strong>SOO</strong>
               <small>serum</small>
             </span>
           </span>
           <span className={`${styles.mockProduct} ${styles.mockJar}`}>
             <span className={styles.mockJarLid} />
             <span className={styles.mockLabel}>
-              <strong>WICKED</strong>
+              <strong>SOO</strong>
               <small>cream</small>
             </span>
           </span>
@@ -170,7 +171,7 @@ export function ProductVisual({
           {product.visual.form === "pump" ? <span className={styles.mockPump} /> : null}
           {product.visual.form === "jar" ? <span className={styles.mockJarLid} /> : null}
           <span className={styles.mockLabel}>
-            <strong>WICKED</strong>
+            <strong>SOO</strong>
             <small>{product.category}</small>
           </span>
         </span>

@@ -6,25 +6,29 @@ export type ProductFilter = "New" | "Popular" | "Premium" | "Sale";
 
 export type StockStatus = "In stock" | "Low stock" | "Out of stock" | "Preorder";
 
-export type ProductSkinType =
-  | "All skin types"
-  | "Normal"
-  | "Dry"
-  | "Oily"
-  | "Combination"
-  | "Sensitive";
+export const PRODUCT_SKIN_TYPES = [
+  "All skin types",
+  "Normal",
+  "Dry",
+  "Oily",
+  "Combination",
+  "Sensitive",
+] as const;
+export type ProductSkinType = (typeof PRODUCT_SKIN_TYPES)[number];
 
-export type ProductConcern =
-  | "Acne & Breakouts"
-  | "Barrier Support"
-  | "Dark Spots"
-  | "Dryness"
-  | "Dullness"
-  | "Fine Lines"
-  | "Oil Control"
-  | "Pores & Texture"
-  | "Redness"
-  | "Sun Protection";
+export const PRODUCT_CONCERNS = [
+  "Acne & Breakouts",
+  "Barrier Support",
+  "Dark Spots",
+  "Dryness",
+  "Dullness",
+  "Fine Lines",
+  "Oil Control",
+  "Pores & Texture",
+  "Redness",
+  "Sun Protection",
+] as const;
+export type ProductConcern = (typeof PRODUCT_CONCERNS)[number];
 
 export type Product = {
   id: string;

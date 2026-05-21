@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useCatalog } from "@/components/catalog/CatalogProvider";
 import { collections, shopFilters } from "@/data/store";
 import { formatPrice } from "@/lib/formatters";
+import { PRODUCT_CONCERNS, PRODUCT_SKIN_TYPES } from "@/types/product";
 import styles from "@/styles/store.module.css";
 
 function uniqueValues<T extends string>(values: Iterable<T | undefined | null>) {
@@ -52,20 +53,12 @@ export function FilterPanel({
     () => ["All", ...uniqueValues(products.map((product) => product.category))],
     [products],
   );
-  const skinTypeFilters = useMemo(
-    () => [
-      "All",
-      ...uniqueValues(products.flatMap((product) => product.skinTypes)),
-    ],
-    [products],
-  );
-  const concernFilters = useMemo(
-    () => [
-      "All",
-      ...uniqueValues(products.flatMap((product) => product.concerns)),
-    ],
-    [products],
-  );
+  // Skin types and concerns come from the canonical type lists rather than
+  // being derived from product data — if Supabase rows haven't been tagged
+  // yet (or the column is empty), the filter chips still render and stay
+  // usable. Categories are still derived because they're free-form text.
+  const skinTypeFilters = ["All", ...PRODUCT_SKIN_TYPES];
+  const concernFilters = ["All", ...PRODUCT_CONCERNS];
 
   return (
     <aside className={styles.filterPanel} aria-label="Shop filters">

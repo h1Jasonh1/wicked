@@ -73,6 +73,7 @@
 .hero {
   position: relative;
   height: 100vh;
+  height: 100svh;
   min-height: 640px;
   overflow: hidden;
   background: var(--bg);
@@ -124,7 +125,10 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(120px, 16vh, 190px) var(--gutter) clamp(110px, 18vh, 220px);
+  /* Top floor (150px) keeps the headline clear of the fixed nav (~86px tall)
+     even when the inner content overflows the available space on short
+     laptop viewports. Bottom padding can shrink more freely. */
+  padding: clamp(150px, 16vh, 190px) var(--gutter) clamp(96px, 16vh, 200px);
   color: var(--paper);
 }
 
@@ -140,7 +144,10 @@
 .heroHeadline {
   font-family: var(--sans);
   font-weight: 600;
-  font-size: clamp(54px, 8.4vw, 150px);
+  /* Cap by viewport height as well as width so the three-line headline
+     never grows taller than the hero on short-but-wide laptops, which is
+     what was pushing content up under the nav. */
+  font-size: min(clamp(54px, 8.4vw, 150px), 14vh);
   line-height: 1;
   letter-spacing: -0.025em;
   color: var(--paper);
@@ -801,9 +808,12 @@
 
 .scatterCluster {
   position: relative;
-  width: min(100vw, 1400px);
+  width: 100%;
+  /* Height is 78vw to match the items' vw-based absolute positions. A
+     previous max-height: 140vh capped the cluster shorter than the items
+     expected, so they spilled out the bottom into the title below.
+     Without the cap the cluster always sizes to fit its items. */
   height: 78vw;
-  max-height: 140vh;
   margin: 0 auto;
 }
 
@@ -1585,6 +1595,14 @@
 
   .heroHeadline {
     font-size: clamp(44px, 13vw, 80px);
+  }
+
+  /* Keep the hero CTA on one line at small phone widths — at 320px the
+     default padding + label width overflows the inner gutter and wraps. */
+  .heroCta {
+    padding: 17px 26px;
+    font-size: 15px;
+    white-space: nowrap;
   }
 
   .edHead h2 {

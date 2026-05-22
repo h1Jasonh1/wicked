@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import type { Product } from "@/types/product";
@@ -26,39 +27,63 @@ function InstagramGlyph() {
   );
 }
 
-const EDITORIAL_PAIRS = [
+type EditorialPair = {
+  tag: string;
+  num: string;
+  sub: string;
+  title: string;
+  image?: string;
+  imageAlt?: string;
+};
+
+const EDITORIAL_PAIRS: EditorialPair[] = [
   {
     tag: "Cold press",
     num: "01 / 04",
     sub: "Process · 02:14",
     title: "The Korean double cleanse, from balm to foam.",
+    image: "/assets/tenderd-image2.webp",
+    imageAlt: "Tended ritual editorial",
   },
   {
     tag: "Snail mucin",
     num: "02 / 04",
     sub: "Ingredient story · 03:01",
     title: "Why snail mucin out-plumps hyaluronic acid.",
+    image: "/assets/tenderd-image1.jpg",
+    imageAlt: "Tended ritual editorial",
   },
   {
     tag: "Lab",
     num: "03 / 04",
     sub: "Formulation · 03:48",
     title: "Layering niacinamide and retinol, without the breakout.",
+    image: "/assets/tenderd-image3.webp",
+    imageAlt: "Tended ritual editorial",
   },
   {
     tag: "Ritual",
     num: "04 / 04",
     sub: "5-step morning ritual · 01:22",
     title: "Five layers, eleven minutes, every morning.",
+    image: "/assets/tenderd-image4.webp",
+    imageAlt: "Tended ritual editorial",
   },
 ];
 
-const SCATTER_ITEMS = [
-  { cls: "s1", meta: "Field, dawn" },
-  { cls: "s2", meta: "" },
-  { cls: "s3", meta: "Studio, glass" },
-  { cls: "s4", meta: "" },
-] as const;
+type ScatterItem = {
+  cls: "s1" | "s2" | "s3" | "s4";
+  meta: string;
+  image?: string;
+  video?: string;
+};
+
+const SCATTER_ITEMS: ScatterItem[] = [
+  { cls: "s1", meta: "Field, dawn", video: "/assets/scatterblock-video3.mp4" },
+  { cls: "s2", meta: "", image: "/assets/scatterblock-image2.jpg" },
+  { cls: "s3", meta: "Studio, glass", image: "/assets/scatterblock-image3.jpg" },
+  { cls: "s4", meta: "", video: "/assets/scatterblock-video1.mp4" },
+];
 
 const INSTAGRAM_URL = "https://www.instagram.com/wickedskincc/";
 
@@ -339,20 +364,32 @@ export function HomeLanding({ products }: { products: Product[] }) {
       {/* ---------- PINNED SPLIT ---------- */}
       <section className={styles.split} ref={splitRef}>
         <div className={styles.splitPin}>
-          <div className={styles.splitCaptionTop}>
-            Now showing — The Korean double cleanse, explained
-          </div>
-
           <div className={styles.splitStage} ref={splitStageRef}>
             <span className={`${styles.splitWord} ${styles.splitWordLeft}`}>
               Double
             </span>
             <div className={styles.splitVideo} ref={splitVideoRef}>
-              <div className={styles.placeholder} />
-              <span className={styles.playTag}>
-                <span className={styles.tri} />
-                Watch · 04:12
-              </span>
+              <video
+                src="/assets/scatterblock-video2.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                aria-label="The Korean double cleanse, explained"
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  // Swap container dims so the portrait source fills the
+                  // landscape stage after a -90deg rotation (same trick as s1).
+                  width: "var(--sv-h, 7.9vw)",
+                  height: "var(--sv-w, 14vw)",
+                  transform: "translate(-50%, -50%) rotate(-90deg)",
+                  objectFit: "cover",
+                  background: "transparent",
+                }}
+              />
             </div>
             <span className={`${styles.splitWord} ${styles.splitWordRight}`}>
               <em>Cleanse.</em>
@@ -360,11 +397,7 @@ export function HomeLanding({ products }: { products: Product[] }) {
           </div>
 
           <div className={styles.splitCaptionBottom}>
-            <span>A film by SOO</span>
-            <span className={styles.dotSep} aria-hidden="true" />
-            <span>Seoul · London</span>
-            <span className={styles.dotSep} aria-hidden="true" />
-            <span>04:12</span>
+            <span>Seoul · Cape Town</span>
           </div>
         </div>
       </section>
@@ -377,7 +410,13 @@ export function HomeLanding({ products }: { products: Product[] }) {
               data-scatter-item
               className={`${styles.scatterItem} ${styles.center}`}
             >
-              <div className={styles.placeholder} />
+              <Image
+                src="/assets/scatterblock-image1.jpg"
+                alt="Hero, the ritual"
+                fill
+                sizes="(max-width: 900px) 100vw, 35vw"
+                style={{ objectFit: "cover", objectPosition: "center" }}
+              />
               <span className={styles.meta}>Hero, the ritual</span>
             </div>
             {SCATTER_ITEMS.map((item) => (
@@ -386,7 +425,57 @@ export function HomeLanding({ products }: { products: Product[] }) {
                 data-scatter-item
                 className={`${styles.scatterItem} ${styles[item.cls]}`}
               >
-                <div className={styles.placeholder} />
+                {item.video ? (
+                  item.cls === "s1" ? (
+                    <video
+                      src={item.video}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="auto"
+                      aria-label={item.meta || "Tended ritual"}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: "center",
+                        background: "transparent",
+                      }}
+                    />
+                  ) : (
+                    <video
+                      src={item.video}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="auto"
+                      aria-label={item.meta || "Tended ritual"}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: "center",
+                        background: "transparent",
+                      }}
+                    />
+                  )
+                ) : item.image ? (
+                  <Image
+                    src={item.image}
+                    alt={item.meta || "Tended ritual"}
+                    fill
+                    sizes="(max-width: 900px) 60vw, 25vw"
+                    style={{ objectFit: "cover", objectPosition: "center" }}
+                  />
+                ) : (
+                  <div className={styles.placeholder} />
+                )}
                 {item.meta ? (
                   <span className={styles.meta}>{item.meta}</span>
                 ) : null}
@@ -446,7 +535,7 @@ export function HomeLanding({ products }: { products: Product[] }) {
 }
 
 function renderEditorialCard(
-  pair: (typeof EDITORIAL_PAIRS)[number],
+  pair: EditorialPair,
   variant: "a" | "b",
 ) {
   return (
@@ -457,7 +546,17 @@ function renderEditorialCard(
       <div className={styles.cardMedia}>
         <span className={styles.cardTag}>{pair.tag}</span>
         <span className={styles.cardTagNum}>{pair.num}</span>
-        <div className={styles.placeholder} />
+        {pair.image ? (
+          <Image
+            src={pair.image}
+            alt={pair.imageAlt ?? pair.title}
+            fill
+            sizes="(max-width: 900px) 100vw, 50vw"
+            style={{ objectFit: "cover", objectPosition: "center" }}
+          />
+        ) : (
+          <div className={styles.placeholder} />
+        )}
         <span className={styles.playPill}>Play film</span>
       </div>
       <div className={styles.cardCaption}>

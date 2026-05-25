@@ -307,6 +307,7 @@
    of products. We translate the track by N × 100% to step between pages. */
 .carousel {
   overflow: hidden;
+  --carousel-cols: 4;
 }
 
 .carouselTrack {
@@ -315,17 +316,13 @@
   will-change: transform;
 }
 
-.carouselPage {
-  flex: 0 0 100%;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: clamp(16px, 1.6vw, 28px);
-}
-
 .product {
   display: flex;
   flex-direction: column;
+  flex: 0 0 calc(100% / var(--carousel-cols, 4));
+  min-width: 0;
+  padding-right: clamp(16px, 1.6vw, 28px);
+  box-sizing: border-box;
 }
 
 .productFrame {
@@ -414,36 +411,80 @@
   white-space: nowrap;
 }
 
-.carouselControls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  margin-top: clamp(40px, 5vw, 72px);
+.carouselWrap {
+  position: relative;
+}
+
+/* Positioning layer that matches the product image strip's footprint:
+   width = carousel width, height = first product's image height. Each
+   product image is 3:4 aspect at (100% / cols) width, so the layer's
+   aspect ratio is (cols * 3 / 4) : 1. Desktop default 4 cols → 3:1. */
+.carouselNav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  pointer-events: none;
+  z-index: 4;
 }
 
 .carouselArrow {
-  width: 44px;
-  height: 44px;
+  position: absolute;
+  top: 50%;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  border: 1px solid var(--hairline-strong);
-  color: var(--fg);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(10, 10, 10, 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: var(--paper);
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: auto;
   transition: background 0.4s var(--ease), color 0.4s var(--ease),
-    border-color 0.4s var(--ease);
+    border-color 0.4s var(--ease), transform 0.4s var(--ease),
+    opacity 0.4s var(--ease);
 }
 
-.carouselArrow:hover {
+.carouselArrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.carouselArrowLeft {
+  left: 0;
+  transform: translate(-50%, -50%);
+}
+
+.carouselArrowRight {
+  /* Last product has a trailing padding-right gap, so the visible image
+     edge sits inside the wrap. Offset right by that gap so the arrow
+     centres on the image edge, not the empty padding. */
+  right: clamp(16px, 1.6vw, 28px);
+  transform: translate(50%, -50%);
+}
+
+.carouselArrowLeft:hover {
   background: var(--paper);
   color: var(--ink);
   border-color: var(--paper);
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.carouselArrowRight:hover {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--paper);
+  transform: translate(50%, -50%) scale(1.06);
 }
 
 .carouselArrow:disabled {
-  opacity: 0.35;
+  opacity: 0.2;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .carouselDots {
@@ -709,6 +750,14 @@
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: rgba(244, 242, 236, 0.7);
+}
+
+.splitCaptionMobileTop {
+  display: none;
+}
+
+.splitCityMobile {
+  display: none;
 }
 
 .dotSep {
@@ -1391,8 +1440,12 @@
 
 /* ---------- RESPONSIVE ---------- */
 @media (max-width: 900px) {
-  .carouselPage {
-    grid-template-columns: repeat(2, 1fr);
+  .carousel {
+    --carousel-cols: 2;
+  }
+
+  .carouselNav {
+    aspect-ratio: 3 / 2;
   }
 
   .carouselHead {
@@ -1421,61 +1474,82 @@
     gap: 32px;
   }
 
-  .splitWord,
-  .splitVideo {
-    position: static;
-    transform: none;
-  }
-
-  .splitWordLeft,
-  .splitWordRight {
-    transform: none;
-  }
-
+  /* Keep the section pinned and the words/video absolute on mobile so the
+     scroll-driven animation (see updateSplit in HomeLanding) can drive the
+     horizontal separation + video growth. Base .splitWordLeft/.splitWordRight
+     transforms already use --word-offset for X — we just retune the size. */
   .splitStage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(16px, 4vh, 32px);
-  }
-
-  .splitWord {
-    font-size: clamp(44px, 13vw, 110px);
-    text-align: center;
-  }
-
-  .splitVideo {
-    width: 80% !important;
-    height: auto !important;
-    aspect-ratio: 16 / 9;
-  }
-
-  .split {
+    flex: 1;
+    position: relative;
     min-height: 0;
   }
 
-  .splitPin {
-    position: static;
-    height: auto;
-    padding: clamp(80px, 14vw, 140px) var(--gutter);
+  .splitWord {
+    font-size: clamp(28px, 7.5vw, 56px);
   }
 
-  .splitCaptionTop,
+  .splitVideo {
+    width: var(--sv-w, 8vw);
+    height: var(--sv-h, 5vh);
+  }
+
+  .splitCaptionMobileTop {
+    position: absolute;
+    top: clamp(120px, 18vh, 170px);
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    padding: 0 var(--gutter);
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(244, 242, 236, 0.7);
+    pointer-events: none;
+  }
+
   .splitCaptionBottom {
-    position: static;
-    padding: 0;
-    text-align: left;
-    justify-content: flex-start;
+    bottom: clamp(120px, 18vh, 170px);
   }
 
-  .splitCaptionTop {
-    margin-bottom: 28px;
+  .splitCityDesktop {
+    display: none;
   }
 
-  .splitCaptionBottom {
-    margin-top: 28px;
-    flex-wrap: wrap;
+  .splitCityMobile {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .splitCityMobile::before {
+    content: "";
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.55;
+  }
+
+  .splitCaptionMobileTop > span {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .splitCaptionMobileTop > span::after {
+    content: "";
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.55;
   }
 
   /* Library scatter: stack the cluster vertically — the absolutely
@@ -1584,9 +1658,38 @@
 }
 
 @media (max-width: 600px) {
-  .carouselPage {
-    grid-template-columns: 1fr;
-    gap: 28px;
+  /* Mobile ritual carousel: ditch the paginated translateX track in favour
+     of native horizontal scroll-snap so users can finger-swipe through
+     products individually. JS inline transform is overridden with
+     !important since it drives the desktop one-at-a-time pagination. */
+  .carousel {
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    margin-right: calc(-1 * var(--gutter));
+    padding-right: var(--gutter);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .carousel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .carouselTrack {
+    transform: none !important;
+    transition: none !important;
+    gap: 16px;
+  }
+
+  .product {
+    flex: 0 0 78vw;
+    padding-right: 0;
+    scroll-snap-align: center;
+  }
+
+  .carouselArrow {
+    display: none;
   }
 
   .instaGrid {
@@ -1609,9 +1712,23 @@
     font-size: clamp(72px, 22vw, 140px);
   }
 
+  .editorial {
+    padding-top: clamp(40px, 10vw, 64px);
+    padding-bottom: clamp(40px, 10vw, 64px);
+  }
+
+  .edHead {
+    margin-bottom: clamp(20px, 6vw, 36px);
+  }
+
   .pair,
   .pairOffset {
-    margin-bottom: clamp(48px, 10vw, 80px);
+    gap: 18px;
+    margin-bottom: clamp(28px, 7vw, 48px);
+  }
+
+  .pairRight {
+    gap: 18px;
   }
 }
 

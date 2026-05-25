@@ -188,14 +188,29 @@ export function HomeLanding({ products }: { products: Product[] }) {
       const total = Math.max(1, section.offsetHeight - vh);
       const scrolled = Math.min(total, Math.max(0, -rect.top));
       const anim = reduceMotion ? 0 : Math.min(1, scrolled / vh);
+      const isMobile = window.matchMedia("(max-width: 900px)").matches;
 
-      stage.style.setProperty("--word-offset", `${22 - 21 * anim}vw`);
-      video.style.setProperty("--sv-w", `${14 + 86 * anim}vw`);
-      const startH = (14 * 9) / 16;
-      video.style.setProperty(
-        "--sv-h",
-        `calc(${(1 - anim) * startH}vw + ${anim * 100}vh)`,
-      );
+      if (isMobile) {
+        // Mobile: matches the "Play / Reel" reference. At start the video
+        // is moderately sized between words spread on either side. By the
+        // end the words have slid fully off-screen and the video nearly
+        // fills the viewport.
+        const videoWvw = 44 + 42 * anim; // 44vw → 86vw
+        const videoHvh = 24 + 32 * anim; // 24vh → 56vh
+        video.style.setProperty("--sv-w", `${videoWvw}vw`);
+        video.style.setProperty("--sv-h", `${videoHvh}vh`);
+        stage.style.setProperty("--word-offset", `${anim * 88}vw`);
+        stage.style.setProperty("--word-offset-y", "0vh");
+      } else {
+        stage.style.setProperty("--word-offset", `${22 - 21 * anim}vw`);
+        video.style.setProperty("--sv-w", `${14 + 86 * anim}vw`);
+        const startH = (14 * 9) / 16;
+        video.style.setProperty(
+          "--sv-h",
+          `calc(${(1 - anim) * startH}vw + ${anim * 100}vh)`,
+        );
+        stage.style.setProperty("--word-offset-y", "0vh");
+      }
       video.style.setProperty("--play-tag-op", String(Math.max(0, 1 - anim * 1.6)));
     };
 
@@ -339,18 +354,6 @@ export function HomeLanding({ products }: { products: Product[] }) {
         <div className={styles.pair}>
           {renderEditorialCard(EDITORIAL_PAIRS[0], "a")}
           <div className={styles.pairRight}>
-            <div
-              data-reveal
-              className={`${styles.edIntro} ${styles.reveal} ${styles.delay1}`}
-            >
-              <span className={styles.eyebrow}>
-                Chapter 01 · Centella Asiatica
-              </span>
-              The mountain herb behind every cica formula. We ferment it cold to
-              concentrate madecassoside — the molecule that calms redness,
-              repairs the skin barrier, and gives Korean skincare its quiet
-              authority.
-            </div>
             {renderEditorialCard(EDITORIAL_PAIRS[1], "b")}
           </div>
         </div>
@@ -364,6 +367,9 @@ export function HomeLanding({ products }: { products: Product[] }) {
       {/* ---------- PINNED SPLIT ---------- */}
       <section className={styles.split} ref={splitRef}>
         <div className={styles.splitPin}>
+          <div className={styles.splitCaptionMobileTop}>
+            <span>Seoul</span>
+          </div>
           <div className={styles.splitStage} ref={splitStageRef}>
             <span className={`${styles.splitWord} ${styles.splitWordLeft}`}>
               Double
@@ -397,7 +403,8 @@ export function HomeLanding({ products }: { products: Product[] }) {
           </div>
 
           <div className={styles.splitCaptionBottom}>
-            <span>Seoul · Cape Town</span>
+            <span className={styles.splitCityDesktop}>Seoul · Cape Town</span>
+            <span className={styles.splitCityMobile}>Cape Town</span>
           </div>
         </div>
       </section>

@@ -35,7 +35,6 @@ export function Navbar({
   const { openCartDrawer, openWishlistDrawer, searchOpen, setSearchOpen } =
     useUIStore();
 
-  const accountActive = isActivePath(pathname, "/account");
   // The nav floats transparent only over the home hero. Everywhere else
   // — and once scrolled, or while the search panel is open — it collapses
   // to the smoky dark blurred bar.
@@ -82,15 +81,6 @@ export function Navbar({
           >
             <Icon name="search" />
           </button>
-          <Link
-            className={`${styles.navIcon} ${accountActive ? styles.navIconActive : ""}`}
-            href="/account"
-            aria-label="Account"
-            aria-current={accountActive ? "page" : undefined}
-            onClick={() => setSearchOpen(false)}
-          >
-            <Icon name="user" />
-          </Link>
           <button
             className={styles.navIcon}
             type="button"

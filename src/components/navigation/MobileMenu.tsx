@@ -1,11 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { brand } from "@/data/store";
-import { primaryNav, supportLinks } from "@/data/navigation";
+import { primaryNav } from "@/data/navigation";
+
+const menuLinks = primaryNav.filter((item) => item.href !== "/");
 import { isActivePath } from "@/lib/routing";
 import { Icon } from "@/components/ui/Icons";
+import { useCartStore, useUIStore, useWishlistStore } from "@/store/StoreProvider";
 import { BrandLogo } from "./BrandLogo";
 import styles from "@/styles/store.module.css";
 
@@ -18,7 +21,23 @@ export function MobileMenu({
 }) {
   const pathname = usePathname();
   const accountActive = isActivePath(pathname, "/account");
+  const { openCartDrawer, openWishlistDrawer } = useUIStore();
+  const { cartCount } = useCartStore();
+  const { wishlistCount } = useWishlistStore();
 
+  const handleCart = () => {
+    onClose();
+    openCartDrawer();
+  };
+
+  const handleWishlist = () => {
+    onClose();
+    openWishlistDrawer();
+  };
+
+  // The drawer mounts with `open` toggling these CSS classes; the stagger
+  // animations key off `mobileMenuOpen` via animation-delay so children
+  // sweep in from top to bottom each time the menu re-opens.
   return (
     <div
       className={`${styles.mobileMenu} ${open ? styles.mobileMenuOpen : ""}`}
@@ -34,38 +53,112 @@ export function MobileMenu({
           aria-label="Close menu"
           onClick={onClose}
         >
+          <span className={styles.mobileCloseLabel}>Close</span>
           <Icon name="close" />
         </button>
       </div>
-      <nav aria-label="Mobile navigation">
-        {primaryNav.map((item) => (
-          <Link key={item.href} href={item.href} onClick={onClose}>
-            <span>{item.label}</span>
-            <Icon name="arrow" />
-          </Link>
-        ))}
-        <Link
-          className={accountActive ? styles.mobileMenuActive : undefined}
-          href="/account"
-          aria-current={accountActive ? "location" : undefined}
-          onClick={onClose}
-        >
-          <span>Account</span>
-          <Icon name="user" />
-        </Link>
-        <div className={styles.mobileSupport}>
-          {supportLinks.map((item) => (
-            <Link key={item.href} href={item.href} onClick={onClose}>
-              {item.label}
-            </Link>
-          ))}
+
+      <div className={styles.mobileMenuBody}>
+        <div className={styles.mobileMenuFigure} aria-hidden="true">
+          <Image
+            src="/assets/tenderd-image1.jpg"
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 0px, 38vw"
+            className={styles.mobileMenuImage}
+            priority={false}
+          />
+          <span className={styles.mobileMenuFigureCaption}>
+            <em>SOO</em> — Authentic Korean skincare.
+          </span>
         </div>
-      </nav>
-      <div className={styles.mobileMenuFooter}>
-        <span>{brand.tagline}</span>
-        <strong>Clean formulas. Bold results. No routine noise.</strong>
-        <small>Free South Africa delivery over R750</small>
+
+        <nav className={styles.mobileMenuNav} aria-label="Primary">
+          <ul className={styles.mobileMenuPrimary}>
+            {menuLinks.map((item, idx) => {
+              const active = isActivePath(pathname, item.href);
+              return (
+                <li
+                  key={item.href}
+                  className={styles.mobileMenuItem}
+                  style={{ ["--stagger" as string]: `${idx * 60}ms` }}
+                >
+                  <Link
+                    href={item.href}
+                    className={`${styles.mobileMenuLink} ${active ? styles.mobileMenuLinkActive : ""}`}
+                    aria-current={active ? "page" : undefined}
+                    onClick={onClose}
+                  >
+                    <span className={styles.mobileMenuLinkText}>{item.label}</span>
+                    <span className={styles.mobileMenuLinkArrow} aria-hidden="true">
+                      <Icon name="arrow" />
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+            <li
+              className={styles.mobileMenuItem}
+              style={{ ["--stagger" as string]: `${menuLinks.length * 60}ms` }}
+            >
+              <Link
+                href="/account"
+                className={`${styles.mobileMenuLink} ${accountActive ? styles.mobileMenuLinkActive : ""}`}
+                aria-current={accountActive ? "page" : undefined}
+                onClick={onClose}
+              >
+                <span className={styles.mobileMenuLinkText}>Account</span>
+                <span className={styles.mobileMenuLinkArrow} aria-hidden="true">
+                  <Icon name="arrow" />
+                </span>
+              </Link>
+            </li>
+          </ul>
+
+          <ul className={styles.mobileMenuSecondary}>
+            <li
+              className={styles.mobileMenuItem}
+              style={{ ["--stagger" as string]: `${(menuLinks.length + 1) * 60 + 40}ms` }}
+            >
+              <button
+                type="button"
+                className={styles.mobileMenuSubLink}
+                onClick={handleWishlist}
+              >
+                <span className={styles.mobileMenuBullet} aria-hidden="true" />
+                <span>
+                  Wishlist
+                  {wishlistCount ? (
+                    <em className={styles.mobileMenuCount}>({wishlistCount})</em>
+                  ) : null}
+                </span>
+                <Icon name="heart" />
+              </button>
+            </li>
+            <li
+              className={styles.mobileMenuItem}
+              style={{ ["--stagger" as string]: `${(menuLinks.length + 1) * 60 + 100}ms` }}
+            >
+              <button
+                type="button"
+                className={styles.mobileMenuSubLink}
+                onClick={handleCart}
+              >
+                <span className={styles.mobileMenuBullet} aria-hidden="true" />
+                <span>
+                  Cart
+                  {cartCount ? (
+                    <em className={styles.mobileMenuCount}>({cartCount})</em>
+                  ) : null}
+                </span>
+                <Icon name="bag" />
+              </button>
+            </li>
+          </ul>
+        </nav>
+
       </div>
+
     </div>
   );
 }

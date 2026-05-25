@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Product } from "@/types/product";
 import { formatPrice } from "@/lib/formatters";
 import styles from "@/styles/landing.module.css";
@@ -94,28 +94,27 @@ const FALLBACK_PRODUCTS = [
   { name: "Barrier Veil Cream", category: "Niacinamide · PHA · 50ml" },
 ];
 
-const CAROUSEL_PAGE_SIZE = 4;
-
-function chunk<T>(items: T[], size: number): T[][] {
-  if (items.length === 0) return [];
-  const pages: T[][] = [];
-  for (let i = 0; i < items.length; i += size) {
-    pages.push(items.slice(i, i + size));
-  }
-  return pages;
-}
-
 export function ShelfSection({ products }: { products: Product[] }) {
   // The active house drives the whole section's accent. Hovering a slat
   // re-tints the ritual carousel below in real time.
   const [house, setHouse] = useState(0);
-  const [page, setPage] = useState(0);
+  const [index, setIndex] = useState(0);
+  // Items visible at once — drives both the translate step and the dot
+  // count. Mirrors the CSS breakpoints (4 desktop / 2 tablet).
+  const [visibleCount, setVisibleCount] = useState(4);
 
-  const productPages = chunk(products, CAROUSEL_PAGE_SIZE);
-  const hasProducts = productPages.length > 0;
-  const pageCount = Math.max(1, productPages.length);
-  // Clamp in case the catalogue shrinks and the current page no longer exists.
-  const currentPage = Math.min(page, pageCount - 1);
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 900px)");
+    const update = () => setVisibleCount(mql.matches ? 2 : 4);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+
+  const hasProducts = products.length > 0;
+  const itemCount = hasProducts ? products.length : FALLBACK_PRODUCTS.length;
+  const maxIndex = Math.max(0, itemCount - visibleCount);
+  const currentIndex = Math.min(index, maxIndex);
   const activeTint = HOUSES[house].tint;
 
   return (
@@ -211,125 +210,106 @@ export function ShelfSection({ products }: { products: Product[] }) {
         </span>
       </div>
 
-      <div className={styles.carousel}>
+      <div className={styles.carouselWrap}>
+        {maxIndex > 0 ? (
+          <div className={styles.carouselNav}>
+            <button
+              className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
+              type="button"
+              aria-label="Previous product"
+              disabled={currentIndex === 0}
+              onClick={() => setIndex((current) => Math.max(0, current - 1))}
+            >
+              <ChevronLeft />
+            </button>
+            <button
+              className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
+              type="button"
+              aria-label="Next product"
+              disabled={currentIndex === maxIndex}
+              onClick={() => setIndex((current) => Math.min(maxIndex, current + 1))}
+            >
+              <ChevronRight />
+            </button>
+          </div>
+        ) : null}
+        <div className={styles.carousel}>
         <div
           className={styles.carouselTrack}
           style={{
-            transform: `translateX(-${currentPage * 100}%)`,
+            // --cols comes from the matching CSS breakpoint (4 desktop / 2
+            // tablet). Translate by one column-width per index step so the
+            // carousel cycles a single product at a time.
+            transform: `translateX(calc(-${currentIndex} * (100% / var(--carousel-cols, 4))))`,
             transition: "transform 0.8s cubic-bezier(.22,.61,.36,1)",
           }}
         >
           {hasProducts
-            ? productPages.map((pageItems, pageIndex) => (
-                <div className={styles.carouselPage} key={pageIndex}>
-                  {pageItems.map((product, index) => (
-                    <Link
-                      className={styles.product}
-                      href={`/product/${product.slug}`}
-                      key={product.id}
-                    >
-                      <div className={styles.productFrame}>
-                        <span className={styles.productNum}>
-                          N°{String(index + 1).padStart(2, "0")}
-                        </span>
-                        {product.image ? (
-                          <Image
-                            src={product.image}
-                            alt={product.imageAlt || product.name}
-                            fill
-                            sizes="(max-width: 900px) 50vw, 25vw"
-                          />
-                        ) : (
-                          <div className={styles.placeholder} />
-                        )}
-                        <span className={styles.productCta} aria-hidden="true">
-                          <ChevronRight />
-                        </span>
-                      </div>
-                      <div className={styles.productMeta}>
-                        <div>
-                          <h3 className={styles.productName}>{product.name}</h3>
-                          <span className={styles.productCat}>
-                            {product.category}
-                          </span>
-                        </div>
-                        <span className={styles.productPrice}>
-                          {formatPrice(product.price)}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+            ? products.map((product, idx) => (
+                <Link
+                  className={styles.product}
+                  href={`/product/${product.slug}`}
+                  key={product.id}
+                >
+                  <div className={styles.productFrame}>
+                    <span className={styles.productNum}>
+                      N°{String(idx + 1).padStart(2, "0")}
+                    </span>
+                    {product.image ? (
+                      <Image
+                        src={product.image}
+                        alt={product.imageAlt || product.name}
+                        fill
+                        sizes="(max-width: 900px) 50vw, 25vw"
+                      />
+                    ) : (
+                      <div className={styles.placeholder} />
+                    )}
+                    <span className={styles.productCta} aria-hidden="true">
+                      <ChevronRight />
+                    </span>
+                  </div>
+                  <div className={styles.productMeta}>
+                    <div>
+                      <h3 className={styles.productName}>{product.name}</h3>
+                      <span className={styles.productCat}>
+                        {product.category}
+                      </span>
+                    </div>
+                    <span className={styles.productPrice}>
+                      {formatPrice(product.price)}
+                    </span>
+                  </div>
+                </Link>
               ))
-            : (
-                <div className={styles.carouselPage}>
-                  {FALLBACK_PRODUCTS.map((product, index) => (
-                    <Link
-                      className={styles.product}
-                      href="/shop"
-                      key={product.name}
-                    >
-                      <div className={styles.productFrame}>
-                        <span className={styles.productNum}>
-                          N°{String(index + 1).padStart(2, "0")}
-                        </span>
-                        <div className={styles.placeholder} />
-                        <span className={styles.productCta} aria-hidden="true">
-                          <ChevronRight />
-                        </span>
-                      </div>
-                      <div className={styles.productMeta}>
-                        <div>
-                          <h3 className={styles.productName}>{product.name}</h3>
-                          <span className={styles.productCat}>
-                            {product.category}
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
+            : FALLBACK_PRODUCTS.map((product, idx) => (
+                <Link
+                  className={styles.product}
+                  href="/shop"
+                  key={product.name}
+                >
+                  <div className={styles.productFrame}>
+                    <span className={styles.productNum}>
+                      N°{String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <div className={styles.placeholder} />
+                    <span className={styles.productCta} aria-hidden="true">
+                      <ChevronRight />
+                    </span>
+                  </div>
+                  <div className={styles.productMeta}>
+                    <div>
+                      <h3 className={styles.productName}>{product.name}</h3>
+                      <span className={styles.productCat}>
+                        {product.category}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+        </div>
         </div>
       </div>
-
-      {pageCount > 1 ? (
-        <div className={styles.carouselControls}>
-          <button
-            className={styles.carouselArrow}
-            type="button"
-            aria-label="Previous products"
-            disabled={currentPage === 0}
-            onClick={() => setPage((current) => Math.max(0, current - 1))}
-          >
-            <ChevronLeft />
-          </button>
-          <div className={styles.carouselDots}>
-            {Array.from({ length: pageCount }).map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                className={`${styles.dot} ${
-                  index === currentPage ? styles.dotActive : ""
-                }`}
-                aria-label={`Go to product set ${index + 1}`}
-                onClick={() => setPage(index)}
-              />
-            ))}
-          </div>
-          <button
-            className={styles.carouselArrow}
-            type="button"
-            aria-label="Next products"
-            disabled={currentPage === pageCount - 1}
-            onClick={() =>
-              setPage((current) => Math.min(pageCount - 1, current + 1))
-            }
-          >
-            <ChevronRight />
-          </button>
-        </div>
-      ) : null}
     </section>
   );
 }
